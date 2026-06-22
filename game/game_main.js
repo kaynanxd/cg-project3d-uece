@@ -76,7 +76,8 @@ async function initGame() {
             u_useVertexColors: gl.getUniformLocation(program, "u_useVertexColors"), // NOVO
             u_color: gl.getUniformLocation(program, "u_color"),
             u_lightPosition: gl.getUniformLocation(program, "u_lightPosition"),
-            u_viewPosition: gl.getUniformLocation(program, "u_viewPosition")
+            u_viewPosition: gl.getUniformLocation(program, "u_viewPosition"),
+            u_flash: gl.getUniformLocation(program, "u_flash") // NOVO
         }
     };
     input = new InputHandler("glcanvas1");
@@ -290,26 +291,29 @@ function renderPlaying() {
         if(mesh) {
             let m = Matrix4.identity();
             
-            // 1º Escala (se for boss)
             if (e.isBoss) {
                 m[0] = 3.0; m[5] = 3.0; m[10] = 3.0;
             }
             
-            // 2º Rotação: Gira o monstro na direção calculada (yaw)
-            // DICA: Se o monstro estiver andando de costas ou de lado, 
-            // mude o "Math.PI" abaixo para "Math.PI / 2" ou "0".
-            let ajusteModelo = Math.PI / 30; // Teste este valor até ficar de frente
+            let ajusteModelo = Math.PI / 30; 
             let rotY = Matrix4.rotationY(e.yaw + ajusteModelo);
             m = Matrix4.multiply(rotY, m);
             
-            // 3º Translação: Põe o monstro na posição dele no mapa
             let tMat = Matrix4.translation(e.x, e.y, e.z);
             m = Matrix4.multiply(tMat, m);
             
             mesh.modelMatrix = m;
+
+            // NOVO: Se o inimigo tiver frames de flash ativos, manda 1.0 pro shader, se não 0.0
+            let flashValue = e.flashFrames > 0 ? 1.0 : 0.0;
+            gl.uniform1f(programInfo.uniforms.u_flash, flashValue);
+            
             mesh.draw(programInfo);
         }
     }
+
+    // NOVO: Reseta o u_flash para 0.0 para que não afete os projéteis e a arma desenhados depois
+    gl.uniform1f(programInfo.uniforms.u_flash, 0.0);
     // 4. DESENHA PROJÉTEIS (Esferas)
     for (let p of projectiles) {
         if (!p.active) continue;

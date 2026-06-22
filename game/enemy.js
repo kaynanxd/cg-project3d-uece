@@ -1,6 +1,5 @@
 // game/enemy.js
 class Enemy {
-    // Variável estática real que dita o tempo do jogo inteiro
     static globalGrowlCooldown = 0;
 
     constructor(x, z, hp, speed, isBoss = false) {
@@ -14,6 +13,7 @@ class Enemy {
         this.radius = isBoss ? 3 : 1.5; 
         this.damage = isBoss ? 20 : 10;
         this.attackCooldown = 0;
+        this.flashFrames = 0; // NOVO: Controla a duração do piscar de dano
         
         this.yaw = 0; 
     }
@@ -29,12 +29,8 @@ class Enemy {
 
         // Sistema de Grunhido Estrito
         if (distance < 30) {
-            // Se o cooldown global for 0, SIGNIFICA QUE NINGUÉM TOCOU SOM RECENTEMENTE
             if (Enemy.globalGrowlCooldown <= 0) {
                 AudioManager.play("enemy_growl", 0.3);
-                
-                // Bloqueia QUALQUER som de grunhido nos próximos X segundos.
-                // 60 frames = 1 segundo. Mude para 300 se quiser 5 segundos de silêncio absoluto.
                 Enemy.globalGrowlCooldown = 240; 
             }
         }
@@ -52,7 +48,9 @@ class Enemy {
         }
 
         if (this.attackCooldown > 0) this.attackCooldown--;
-        // REMOVIDO DAQUI: O decremento do globalGrowlCooldown e do individual!
+        
+        // NOVO: Decrementa os frames do efeito de flash de dano
+        if (this.flashFrames > 0) this.flashFrames--;
     }
 
     takeDamage(amount) {
@@ -60,6 +58,7 @@ class Enemy {
 
         AudioManager.play("enemy_hit", 0.4);
         this.hp -= amount;
+        this.flashFrames = 10; // NOVO: Pisca por 10 frames (~0.16 segundos)
 
         if (this.hp <= 0) {
             this.active = false;

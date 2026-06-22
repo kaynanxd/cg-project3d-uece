@@ -25,7 +25,6 @@ const Shaders = {
             v_color = a_color;
         }
     `,
-
 fragmentSource: `
     precision mediump float;
 
@@ -42,7 +41,7 @@ fragmentSource: `
     uniform vec3 u_lightPosition;
     uniform vec3 u_viewPosition;
 
-    uniform float u_flash; // 0.0 a 1.0
+    uniform float u_flash; // 0.0 (normal) a 1.0 (piscando totalmente)
 
     void main() {
         vec3 normal = normalize(v_normal);
@@ -63,10 +62,14 @@ fragmentSource: `
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
         vec3 specular = specularStrength * spec * vec3(1.0, 1.0, 1.0);
         
-        // Seleção de cor
+        // Seleção de cor base
         vec4 baseColor = (u_useTexture == 1) ? texture2D(u_texture, v_texcoord) : (u_useVertexColors == 1 ? v_color : u_color);
         
-        // Resultado final
+        // Aplicar o efeito de piscar (mistura com uma cor avermelhada/branca brilhante)
+        vec4 flashColor = vec4(1.0, 0.3, 0.3, 1.0); // Vermelho de dano
+        baseColor = mix(baseColor, flashColor, u_flash);
+        
+        // Resultado final com iluminação
         vec3 lighting = ambient + diffuse + specular;
         gl_FragColor = vec4(lighting * baseColor.rgb, baseColor.a);
     }
