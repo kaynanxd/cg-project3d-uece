@@ -33,6 +33,40 @@ const levelMap = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 const TILE_SIZE = 8.0;
+const PLAYER_RADIUS = 0.4;
+
+function isWallBlocking(x, z, radius) {
+    const half = TILE_SIZE / 2;
+    const gx = Math.floor(x / TILE_SIZE);
+    const gz = Math.floor(z / TILE_SIZE);
+
+    for (let dz = -1; dz <= 1; dz++) {
+        for (let dx = -1; dx <= 1; dx++) {
+            const tx = gx + dx;
+            const tz = gz + dz;
+            if (tz < 0 || tz >= levelMap.length || tx < 0 || tx >= levelMap[0].length) continue;
+            if (levelMap[tz][tx] === 0) continue;
+
+            const cx = tx * TILE_SIZE;
+            const cz = tz * TILE_SIZE;
+            const minX = cx - half;
+            const maxX = cx + half;
+            const minZ = cz - half;
+            const maxZ = cz + half;
+
+            if (radius > 0) {
+                const closestX = Math.max(minX, Math.min(x, maxX));
+                const closestZ = Math.max(minZ, Math.min(z, maxZ));
+                const dx2 = x - closestX;
+                const dz2 = z - closestZ;
+                if (dx2 * dx2 + dz2 * dz2 < radius * radius) return true;
+            } else {
+                if (x >= minX && x <= maxX && z >= minZ && z <= maxZ) return true;
+            }
+        }
+    }
+    return false;
+}
 
 async function initGame() {
 
@@ -201,7 +235,20 @@ function updatePlaying() {
     player.update(input, isMovingInput);
 
     // 3. Atualiza a câmera injetando a velocidade resultante do player
+    const oldCamX = camera.position.x;
+    const oldCamZ = camera.position.z;
     camera.update(input, player.currentSpeed);
+    // Colisão com paredes (eixos separados para deslizar)
+    const newCamX = camera.position.x;
+    const newCamZ = camera.position.z;
+    camera.position.x = oldCamX;
+    if (!isWallBlocking(newCamX, oldCamZ, PLAYER_RADIUS)) {
+        camera.position.x = newCamX;
+    }
+    camera.position.z = oldCamZ;
+    if (!isWallBlocking(camera.position.x, newCamZ, PLAYER_RADIUS)) {
+        camera.position.z = newCamZ;
+    }
 
     if (isMovingInput) {
         // Se estiver correndo (velocidade maior), o balanço é mais rápido
@@ -230,14 +277,25 @@ function updatePlaying() {
         return;
     }
 
-    projectiles.forEach(p => p.update());
+    projectiles.forEach(p => {
+        p.update();
+        if (p.active && isWallBlocking(p.x, p.z, 0)) {
+            p.active = false;
+        }
+    });
     projectiles = projectiles.filter(p => p.active);
 
     let livingEnemies = 0;
     for (let e of enemies) {
         if (!e.active) continue;
         livingEnemies++;
+        const oldEX = e.x;
+        const oldEZ = e.z;
         e.update(camera.position.x, camera.position.z, player);
+        if (isWallBlocking(e.x, e.z, e.radius)) {
+            e.x = oldEX;
+            e.z = oldEZ;
+        }
 
         for (let p of projectiles) {
             if (!p.active) continue;
