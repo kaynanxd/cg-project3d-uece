@@ -10,6 +10,20 @@ class HordeManager {
         document.getElementById('wave-total').innerText = config.hordeCount;
     }
 
+    _clampInsideArena(x, z, radius) {
+        if (typeof TILE_SIZE === 'undefined' || typeof levelMap === 'undefined') return {x, z};
+        const half = TILE_SIZE / 2;
+        const margin = 1.0;
+        const minX = 1 * TILE_SIZE - half + margin + radius;
+        const maxX = (levelMap[0].length - 2) * TILE_SIZE + half - margin - radius;
+        const minZ = 1 * TILE_SIZE - half + margin + radius;
+        const maxZ = (levelMap.length - 2) * TILE_SIZE + half - margin - radius;
+        return {
+            x: Math.max(minX, Math.min(maxX, x)),
+            z: Math.max(minZ, Math.min(maxZ, z))
+        };
+    }
+
     // MODIFICADO: Agora recebe a posição do jogador para criar o círculo ao redor dele
     spawnHorde(playerX = 0, playerZ = 0) {
         let spawnList = [];
@@ -19,26 +33,20 @@ class HordeManager {
             this.isBossWave = true;
             document.getElementById('hud-wave').innerHTML = "Horda: <span style='color:red'>BOSS!</span>";
             
-            // O Boss pode continuar nascendo em um ponto fixo distante ou relativo ao jogador
             let bossSpeed = this.config.bossSpeed || (this.config.enemySpeed * 1.5);
-            spawnList.push(new Enemy(playerX, playerZ - 20, this.config.bossHp, bossSpeed, true));
+            let bossPos = this._clampInsideArena(playerX, playerZ - 20, 3.0);
+            spawnList.push(new Enemy(bossPos.x, bossPos.z, this.config.bossHp, bossSpeed, true));
             return spawnList;
         }
 
         // Spawna inimigos normais em um raio ao redor do JOGADOR
         for (let i = 0; i < this.enemiesToSpawn; i++) {
-            // Escolhe um ângulo aleatório (0 a 360 graus)
             let angle = Math.random() * Math.PI * 2;
-            
-            // Aumentamos o raio: nascem entre 20 e 35 unidades de distância do jogador
-            // Isso evita que o jogador veja eles surgindo do nada (pop-in) na tela
             let distance = 30 + Math.random() * 15;
-            
-            // Calcula a posição relativa ao redor do jogador
             let x = playerX + Math.cos(angle) * distance;
             let z = playerZ + Math.sin(angle) * distance;
-            
-            spawnList.push(new Enemy(x, z, this.config.enemyHp, this.config.enemySpeed, false));
+            let clamped = this._clampInsideArena(x, z, 1.5);
+            spawnList.push(new Enemy(clamped.x, clamped.z, this.config.enemyHp, this.config.enemySpeed, false));
         }
 
         this.enemiesToSpawn += 5; 
