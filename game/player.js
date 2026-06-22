@@ -27,7 +27,7 @@ class Player {
         this.currentWeaponIndex = 0; // Começa com a pistola
 
         // Power-up attributes
-        this.damage = 0; // bônus de dano acumulado por power-ups (soma ao dano base da arma)
+        this.damageMultiplier = 0; // contador de quantas vezes pegou o upgrade de dano
         this.extraLives = 0;
         this.piercingLevel = 0;
 
@@ -118,8 +118,9 @@ class Player {
 
             // Normaliza o vetor novamente para a velocidade ser constante
             let finalLength = Math.sqrt(finalDirX*finalDirX + finalDirY*finalDirY + finalDirZ*finalDirZ);
-            
-            let effectiveDamage = weapon.damage + this.damage;
+
+            let gunDamage = Math.floor(weapon.damage * (1 + this.d))
+            let effectiveDamage = Math.floor(weapon.damage * (1 + this.damageMultiplier * 0.1));
             spawnedProjectiles.push(new Projectile(
                 spawnX, spawnY, spawnZ, 
                 finalDirX / finalLength, finalDirY / finalLength, finalDirZ / finalLength, 
@@ -169,7 +170,7 @@ function updateHUD(player) {
     document.getElementById('hud-stamina').innerText = Math.floor(player.stamina);
     document.getElementById('hud-maxstamina').innerText = player.maxStamina;
     let weapon = player.weapons[player.currentWeaponIndex];
-    document.getElementById('hud-damage').innerText = weapon.damage + player.damage;
+    document.getElementById('hud-damage').innerText = Math.floor(weapon.damage * (1 + player.damageMultiplier * 0.1));
     document.getElementById('hud-lives').innerText = player.extraLives;
     document.getElementById('hud-piercing').innerText = player.piercingLevel;
 }

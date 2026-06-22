@@ -21,11 +21,11 @@ const POWERUP_TYPES = [
     },
     {
         id: 'damage',
-        name: '+1 Weapon Damage',
-        desc: 'Adiciona +1 de dano a todas as armas',
+        name: '+DMG UP',
+        desc: 'Adiciona +10% do dano base da arma',
         color: '#ff8800',
         apply: (player) => {
-            player.damage += 1;
+            player.damageMultiplier += 1;
         }
     },
     {
