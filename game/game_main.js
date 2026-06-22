@@ -300,8 +300,8 @@ function renderPlaying() {
     // 2. Define o tamanho do "cone" de luz. 
     // Math.cos é usado porque o Shader calcula luz via Produto Escalar (dot product)
     // 12.5 graus é o círculo forte no meio, 17.5 graus é onde a luz morre (suave)
-    gl.uniform1f(programInfo.uniforms.u_lightCutOff, Math.cos(30 * Math.PI / 180));
-    gl.uniform1f(programInfo.uniforms.u_lightOuterCutOff, Math.cos(40 * Math.PI / 180));
+    gl.uniform1f(programInfo.uniforms.u_lightCutOff, Math.cos(25 * Math.PI / 180));
+    gl.uniform1f(programInfo.uniforms.u_lightOuterCutOff, Math.cos(35 * Math.PI / 180));
     // ==========================================================
 
     let activeProjs = projectiles.filter(p => p.active);
