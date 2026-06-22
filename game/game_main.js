@@ -4,9 +4,9 @@ const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3 , PAUSED: 4};
 let currentState = GameState.MENU;
 
 const DifficultyConfig = {
-    EASY:   { hordeCount: 3, baseEnemies: 3,  enemySpeed: 0.04, enemyHp: 70,  bossHp: 600 ,bossSpeed: 0.06},
-    NORMAL: { hordeCount: 5, baseEnemies: 6,  enemySpeed: 0.06, enemyHp: 100, bossHp: 1000 ,bossSpeed: 0.010},
-    HARD:   { hordeCount: 7, baseEnemies: 10, enemySpeed: 0.08, enemyHp: 150, bossHp: 1500 , bossSpeed: 0.15}
+    EASY:   { hordeCount: 3, baseEnemies: 3,  enemySpeed: 0.06, enemyHp: 70,  bossHp: 600 ,bossSpeed: 0.08},
+    NORMAL: { hordeCount: 5, baseEnemies: 6,  enemySpeed: 0.08, enemyHp: 100, bossHp: 1000 ,bossSpeed: 0.10},
+    HARD:   { hordeCount: 7, baseEnemies: 10, enemySpeed: 0.10, enemyHp: 150, bossHp: 1500 , bossSpeed: 0.10}
 };
 
 let currentDifficulty;
