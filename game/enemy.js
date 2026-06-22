@@ -1,4 +1,3 @@
-// game/enemy.js
 class Enemy {
     static globalGrowlCooldown = 0;
 
@@ -13,13 +12,24 @@ class Enemy {
         this.radius = isBoss ? 3 : 1.5; 
         this.damage = isBoss ? 20 : 10;
         this.attackCooldown = 0;
-        this.flashFrames = 0; // NOVO: Controla a duração do piscar de dano
+        this.flashFrames = 0; 
+        this.isDying = false; // NOVO: Flag para saber se está na animação de morte
         
         this.yaw = 0; 
     }
 
     update(playerX, playerZ, playerObj) {
         if (!this.active) return;
+
+        // NOVO: Gerencia o tempo de morte antes de desativar real
+        if (this.isDying) {
+            if (this.flashFrames > 0) {
+                this.flashFrames--;
+            } else {
+                this.active = false; // Agora sim, sumir do jogo!
+            }
+            return; // Impede o inimigo de andar ou atacar enquanto morre
+        }
 
         let dx = playerX - this.x;
         let dz = playerZ - this.z;
@@ -49,19 +59,21 @@ class Enemy {
 
         if (this.attackCooldown > 0) this.attackCooldown--;
         
-        // NOVO: Decrementa os frames do efeito de flash de dano
+        // Decrementa os frames do efeito de flash de dano normal
         if (this.flashFrames > 0) this.flashFrames--;
     }
 
     takeDamage(amount) {
-        if (!this.active) return;
+        // Se já estiver inativo ou morrendo, ignora o dano
+        if (!this.active || this.isDying) return;
 
         AudioManager.play("enemy_hit", 0.4);
         this.hp -= amount;
-        this.flashFrames = 10; // NOVO: Pisca por 10 frames (~0.16 segundos)
+        this.flashFrames = 10; 
 
         if (this.hp <= 0) {
-            this.active = false;
+            this.isDying = true; // Em vez de falsear o active direto, avisa que está morrendo
+            this.flashFrames = 15; // Dá uns frames a mais para piscar na morte
             AudioManager.play("enemy_death", 0.6);
         }
     }
