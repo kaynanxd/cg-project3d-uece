@@ -5,9 +5,14 @@ class Player {
         this.hp = this.maxHp;
         this.shootCooldown = 0;
         updateHUD(this.hp);
+        this.damageAudioCooldown = 0;
     }
 
     takeDamage(amount) {
+        if (this.damageAudioCooldown <= 0) {
+            AudioManager.play("player_hit", 1);
+            this.damageAudioCooldown = 60; // Bloqueia o som por 45 frames (~0.7 segundos)
+        }
         this.hp -= amount;
         if (this.hp < 0) this.hp = 0;
         updateHUD(this.hp);
@@ -26,6 +31,7 @@ class Player {
     shoot(cameraX, cameraY, cameraZ, yaw, pitch) { // <-- pitch adicionado aqui
         if (!this.canShoot()) return null;
         this.shootCooldown = 15; 
+        AudioManager.play("gunshot", 0.4);
 
         // 1. Calcula o vetor Frente REAL da câmera (Incluindo olhar pra cima/baixo)
         let cosPitch = Math.cos(pitch);
@@ -77,6 +83,7 @@ class Player {
 
     update() {
         if (this.shootCooldown > 0) this.shootCooldown--;
+        if (this.damageAudioCooldown > 0) this.damageAudioCooldown--;
     }
 }
 

@@ -4,8 +4,8 @@ const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3 , PAUSED: 4};
 let currentState = GameState.MENU;
 
 const DifficultyConfig = {
-    EASY:   { hordeCount: 3, baseEnemies: 3,  enemySpeed: 0.03, enemyHp: 50,  bossHp: 300 },
-    NORMAL: { hordeCount: 5, baseEnemies: 6,  enemySpeed: 0.05, enemyHp: 100, bossHp: 600 },
+    EASY:   { hordeCount: 3, baseEnemies: 3,  enemySpeed: 0.04, enemyHp: 70,  bossHp: 300 },
+    NORMAL: { hordeCount: 5, baseEnemies: 6,  enemySpeed: 0.06, enemyHp: 100, bossHp: 600 },
     HARD:   { hordeCount: 7, baseEnemies: 10, enemySpeed: 0.08, enemyHp: 150, bossHp: 1000 }
 };
 
@@ -34,6 +34,19 @@ const levelMap = [
 const TILE_SIZE = 8.0;
 
 async function initGame() {
+
+    try {
+    await AudioManager.load("music", "assets/audio/musica_fundo.mp3");
+    await AudioManager.load("footstep", "assets/audio/passos.mp3");
+    console.log("Passos carregado");
+    await AudioManager.load("gunshot", "assets/audio/tiro.mp3");
+    await AudioManager.load("player_hit", "assets/audio/player_dano.mp3");
+    await AudioManager.load("enemy_hit", "assets/audio/inimigo_dano.mp3");
+    await AudioManager.load("enemy_growl", "assets/audio/grunhido.mp3");
+    await AudioManager.load("enemy_death","assets/audio/enemy_death.mp3");
+    } catch (e) {
+        console.warn("Erro ao carregar sons", e);
+    }
     const canvas = document.getElementById("glcanvas1");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -138,19 +151,26 @@ function resumeGame() {
     document.getElementById("pause-screen").style.display = "none";
 }
 
-function startGame(diffStr) {
+async function startGame(diffStr) {
+
+    if (AudioManager.audioCtx.state === "suspended") {
+        await AudioManager.audioCtx.resume();
+    }
+
+    AudioManager.playMusic("music", 0.05);
+
     currentDifficulty = DifficultyConfig[diffStr];
     player = new Player();
     hordeManager = new HordeManager(currentDifficulty);
     enemies = hordeManager.spawnHorde();
     projectiles = [];
-    
+
     document.getElementById("menu-screen").style.display = "none";
     document.getElementById("crosshair").style.display = "block";
     document.getElementById("hud").style.display = "block";
     document.getElementById("hud-wave").style.display = "block";
     document.getElementById("glcanvas1").requestPointerLock();
-    
+
     currentState = GameState.PLAYING;
 }
 
@@ -165,6 +185,10 @@ function gameLoop() {
 function updatePlaying() {
     camera.update(input);
     player.update();
+
+    if (typeof Enemy !== 'undefined' && Enemy.globalGrowlCooldown > 0) {
+        Enemy.globalGrowlCooldown--;
+    }
 
     if (player.hp <= 0) {
         currentState = GameState.GAME_OVER;
