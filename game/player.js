@@ -1,23 +1,33 @@
-// game/player.js
 class Player {
     constructor() {
         this.maxHp = 100;
         this.hp = this.maxHp;
         this.shootCooldown = 0;
-        updateHUD(this.hp);
         this.damageAudioCooldown = 0;
+
+        // NOVO: Atributos de Stamina
+        this.maxStamina = 100;
+        this.stamina = this.maxStamina;
+        this.staminaCooldown = 0; // Cooldown quando zera
+        this.isExhausted = false; // Bloqueia corrida enquanto recupera do zero
+
+        // Configurações de velocidade de movimentação
+        this.walkSpeed = 0.08;
+        this.runSpeed = 0.15; // Velocidade ao correr
+        this.currentSpeed = this.walkSpeed;
+
+        updateHUD(this.hp, this.stamina);
     }
 
     takeDamage(amount) {
         if (this.damageAudioCooldown <= 0) {
             AudioManager.play("player_hit", 1);
-            this.damageAudioCooldown = 60; // Bloqueia o som por 45 frames (~0.7 segundos)
+            this.damageAudioCooldown = 60;
         }
         this.hp -= amount;
         if (this.hp < 0) this.hp = 0;
-        updateHUD(this.hp);
+        updateHUD(this.hp, this.stamina);
         
-        // Efeito visual de dano (pisca a tela de vermelho via CSS)
         document.getElementById('ui-layer').style.backgroundColor = "rgba(255, 0, 0, 0.3)";
         setTimeout(() => document.getElementById('ui-layer').style.backgroundColor = "transparent", 100);
     }
@@ -26,14 +36,11 @@ class Player {
         return this.shootCooldown <= 0;
     }
 
-// game/player.js - Substitua a função shoot por esta:
-
-    shoot(cameraX, cameraY, cameraZ, yaw, pitch) { // <-- pitch adicionado aqui
+    shoot(cameraX, cameraY, cameraZ, yaw, pitch) {
         if (!this.canShoot()) return null;
         this.shootCooldown = 15; 
         AudioManager.play("gunshot", 0.4);
 
-        // 1. Calcula o vetor Frente REAL da câmera (Incluindo olhar pra cima/baixo)
         let cosPitch = Math.cos(pitch);
         let sinPitch = Math.sin(pitch);
         let sinYaw = Math.sin(yaw);
@@ -43,50 +50,68 @@ class Player {
         let camDirY = sinPitch; 
         let camDirZ = -cosYaw * cosPitch;
 
-        // 2. Calcula o vetor Direita (para o deslocamento horizontal da arma)
         let rightX = cosYaw;
         let rightZ = -sinYaw;
 
-        // ==========================================================
-        // AJUSTE FINO DA BOCA DA ARMA 
-        // ==========================================================
         let offsetRight = 1.0;   
         let offsetDown = -0.2;   
         let offsetForward = 0; 
         
-        // 3. Calcula o Spawn (onde o tiro nasce). 
-        // Adicionamos camDirY * offsetForward para o tiro acompanhar quando você olha pra cima
         let spawnX = cameraX + (rightX * offsetRight) + (camDirX * offsetForward);
         let spawnY = cameraY + offsetDown + (camDirY * offsetForward); 
         let spawnZ = cameraZ + (rightZ * offsetRight) + (camDirZ * offsetForward);
 
-        // 4. Cria um "Ponto Alvo" imaginário no centro da tela, 50 unidades para frente
         let targetDist = 50.0;
         let targetX = cameraX + (camDirX * targetDist);
         let targetY = cameraY + (camDirY * targetDist);
         let targetZ = cameraZ + (camDirZ * targetDist);
 
-        // 5. Calcula o vetor de Trajetória (do Spawn até o Alvo)
         let trajX = targetX - spawnX;
         let trajY = targetY - spawnY;
         let trajZ = targetZ - spawnZ;
 
-        // 6. Normaliza o vetor da Trajetória (para a velocidade do tiro ser constante)
         let length = Math.sqrt(trajX*trajX + trajY*trajY + trajZ*trajZ);
-        let projDirX = trajX / length;
-        let projDirY = trajY / length;
-        let projDirZ = trajZ / length;
-
-        // Retorna o projétil usando a nova direção que cruza o centro da tela
-        return new Projectile(spawnX, spawnY, spawnZ, projDirX, projDirY, projDirZ, 0.5);
+        
+        return new Projectile(spawnX, spawnY, spawnZ, trajX / length, trajY / length, trajZ / length, 0.5);
     }
 
-    update() {
+    // NOVO: Gerencia a mecânica de corrida e regeneração por frame
+    update(inputHandler, isMoving) {
         if (this.shootCooldown > 0) this.shootCooldown--;
         if (this.damageAudioCooldown > 0) this.damageAudioCooldown--;
+
+        // Verifica se quer correr (Shift), está se movendo e não está exausto
+        if (inputHandler.isPressed('shift') && isMoving && !this.isExhausted) {
+            this.currentSpeed = this.runSpeed;
+            this.stamina -= 0.6; // Gasta stamina por frame de corrida (~36 por segundo)
+
+            if (this.stamina <= 0) {
+                this.stamina = 0;
+                this.isExhausted = true;
+                this.staminaCooldown = 90; // 1.5 segundos de cooldown absoluto
+            }
+        } else {
+            // Estado de caminhada ou parado
+            this.currentSpeed = this.walkSpeed;
+
+            if (this.staminaCooldown > 0) {
+                this.staminaCooldown--;
+            } else {
+                // Se o cooldown acabou, regenera a stamina
+                if (this.stamina < this.maxStamina) {
+                    this.stamina += 0.4; // Taxa de regeneração por frame
+                    if (this.stamina >= 20) this.isExhausted = false; // Recuperou o fôlego mínimo
+                    if (this.stamina > this.maxStamina) this.stamina = this.maxStamina;
+                }
+            }
+        }
+
+        updateHUD(this.hp, this.stamina);
     }
 }
 
-function updateHUD(hp) {
+// Atualizado para receber e exibir a stamina arredondada
+function updateHUD(hp, stamina) {
     document.getElementById('hud-hp').innerText = hp;
+    document.getElementById('hud-stamina').innerText = Math.floor(stamina);
 }

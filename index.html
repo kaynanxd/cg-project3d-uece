@@ -36,6 +36,7 @@
             text-shadow: 2px 2px #000; display: none; font-weight: bold;
         }
         #hud-hp { color: #ff3333; }
+        #hud-stamina { color: #33ff33; }
         #hud-wave { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; display: none; }
         /* Isso garante que o canvas fique atrás de tudo */
         #glcanvas1 {
@@ -69,7 +70,11 @@
     <div id="ui-layer">
         <div id="crosshair" style="display: none;"></div>
         
-        <div id="hud">HP: <span id="hud-hp">100</span></div>
+        <div id="hud">
+            <div>HP: <span id="hud-hp">100</span></div>
+            <div>STAMINA: <span id="hud-stamina">100</span></div>
+
+        </div>
         <div id="hud-wave">Horda: <span id="wave-count">1</span>/<span id="wave-total">3</span></div>
 
         <div id="menu-screen" class="screen">

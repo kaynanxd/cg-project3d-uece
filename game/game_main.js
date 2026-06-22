@@ -184,8 +184,16 @@ function gameLoop() {
 }
 
 function updatePlaying() {
-    camera.update(input);
-    player.update();
+
+    let isMovingInput = input.isPressed('w') || input.isPressed('s') || input.isPressed('a') || input.isPressed('d');
+
+    // 2. Atualiza o player enviando o estado das teclas, processando a stamina e definindo a velocidade
+    player.update(input, isMovingInput);
+
+    // 3. Atualiza a câmera injetando a velocidade resultante do player
+    camera.update(input, player.currentSpeed);
+
+    
 
     if (typeof Enemy !== 'undefined' && Enemy.globalGrowlCooldown > 0) {
         Enemy.globalGrowlCooldown--;

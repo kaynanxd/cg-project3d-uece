@@ -13,11 +13,9 @@ class FPSCamera {
         this.stepCooldown = 0;
     }
 
-    update(inputHandler) {
-
+    update(inputHandler, speed) {
         let moving = false;
 
-        // Mouse
         let mouse = inputHandler.getMouseDelta();
         this.yaw -= mouse.x * this.lookSpeed;
         this.pitch -= mouse.y * this.lookSpeed;
@@ -34,59 +32,47 @@ class FPSCamera {
         let rightX = cosYaw;
         let rightZ = -sinYaw;
 
-        // Movimento
+        // Movimento aplicando o parâmetro de speed dinâmico
         if (inputHandler.isPressed('w')) {
             moving = true;
-            this.position.x += forwardX * this.moveSpeed;
-            this.position.z += forwardZ * this.moveSpeed;
+            this.position.x += forwardX * speed;
+            this.position.z += forwardZ * speed;
         }
-
         if (inputHandler.isPressed('s')) {
             moving = true;
-            this.position.x -= forwardX * this.moveSpeed;
-            this.position.z -= forwardZ * this.moveSpeed;
+            this.position.x -= forwardX * speed;
+            this.position.z -= forwardZ * speed;
         }
-
         if (inputHandler.isPressed('a')) {
             moving = true;
-            this.position.x -= rightX * this.moveSpeed;
-            this.position.z -= rightZ * this.moveSpeed;
+            this.position.x -= rightX * speed;
+            this.position.z -= rightZ * speed;
         }
-
         if (inputHandler.isPressed('d')) {
             moving = true;
-            this.position.x += rightX * this.moveSpeed;
-            this.position.z += rightZ * this.moveSpeed;
+            this.position.x += rightX * speed;
+            this.position.z += rightZ * speed;
         }
 
-        // SOM DE PASSOS
         if (moving) {
-
             if (this.stepCooldown <= 0) {
-
                 AudioManager.play("footstep", 1);
-
-                this.stepCooldown = 60;
+                // Dica: Se quiser passos rápidos ao correr, mude o cooldown baseado na speed!
+                this.stepCooldown = speed > 0.1 ? 35 : 60;
             }
         }
 
         if (this.stepCooldown > 0) {
             this.stepCooldown--;
         }
+
+        return moving; // Retorna se o jogador está andando/correndo
     }
 
     getViewMatrix() {
         let matRx = Matrix4.rotationX(-this.pitch);
         let matRy = Matrix4.rotationY(-this.yaw);
-        let matT = Matrix4.translation(
-            -this.position.x,
-            -this.position.y,
-            -this.position.z
-        );
-
-        let view = Matrix4.multiply(matRx, matRy);
-        view = Matrix4.multiply(view, matT);
-
-        return view;
+        let matT = Matrix4.translation(-this.position.x, -this.position.y, -this.position.z);
+        return Matrix4.multiply(Matrix4.multiply(matRx, matRy), matT);
     }
 }
