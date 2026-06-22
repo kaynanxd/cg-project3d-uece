@@ -73,7 +73,7 @@ class Player {
 
         let length = Math.sqrt(trajX*trajX + trajY*trajY + trajZ*trajZ);
         
-        return new Projectile(spawnX, spawnY, spawnZ, trajX / length, trajY / length, trajZ / length, 0.5);
+        return new Projectile(spawnX, spawnY, spawnZ, trajX / length, trajY / length, trajZ / length, 1.5);
     }
 
     // NOVO: Gerencia a mecânica de corrida e regeneração por frame

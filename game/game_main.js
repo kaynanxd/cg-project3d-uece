@@ -79,7 +79,12 @@ async function initGame() {
             u_lightPosition: gl.getUniformLocation(program, "u_lightPosition"),
             u_viewPosition: gl.getUniformLocation(program, "u_viewPosition"),
             u_lightColor: gl.getUniformLocation(program, "u_lightColor"),
-            u_flash: gl.getUniformLocation(program, "u_flash") // NOVO
+            u_flash: gl.getUniformLocation(program, "u_flash") ,// NOVO
+            u_numProjLights: gl.getUniformLocation(program, "u_numProjLights"),
+            u_projLightPositions: gl.getUniformLocation(program, "u_projLightPositions"),
+            u_projLightColors: gl.getUniformLocation(program, "u_projLightColors"),
+            u_emissive: gl.getUniformLocation(program, "u_emissive"),
+            u_flash: gl.getUniformLocation(program, "u_flash")
         }
     };
     input = new InputHandler("glcanvas1");
@@ -273,6 +278,32 @@ function renderPlaying() {
     gl.uniform3f(programInfo.uniforms.u_lightPosition, camera.position.x, camera.position.y + 0.5, camera.position.z);
     gl.uniform3f(programInfo.uniforms.u_viewPosition, camera.position.x, camera.position.y, camera.position.z);
 
+    let activeProjs = projectiles.filter(p => p.active);
+    let numProjLights = Math.min(activeProjs.length, 5);
+    gl.uniform1i(programInfo.uniforms.u_numProjLights, numProjLights);
+
+    if (numProjLights > 0) {
+        // Arrays achatados em 1D porque o WebGL lê dados assim
+        let projPositions = new Float32Array(numProjLights * 3);
+        let projColors = new Float32Array(numProjLights * 3);
+        
+        for (let i = 0; i < numProjLights; i++) {
+            let p = activeProjs[i];
+            // Posição do projétil
+            projPositions[i*3] = p.x;
+            projPositions[i*3 + 1] = p.y;
+            projPositions[i*3 + 2] = p.z;
+            
+            // Cor do projétil (Laranja neon/Plasma estourado)
+            projColors[i*3] = 1;     // Reduzido de 5.0
+            projColors[i*3 + 1] = 0.5; // Reduzido de 2.5
+            projColors[i*3 + 2] = 0.0;
+        }
+        
+        gl.uniform3fv(programInfo.uniforms.u_projLightPositions, projPositions);
+        gl.uniform3fv(programInfo.uniforms.u_projLightColors, projColors);
+    }
+
     // ==========================================================
     // FUNÇÃO AUXILIAR PARA GARANTIR A COR DA LUZ A CADA DESENHO
     // ==========================================================
@@ -349,18 +380,35 @@ function renderPlaying() {
     gl.uniform1f(programInfo.uniforms.u_flash, 0.0);
 
     // 4. DESENHA PROJÉTEIS
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE); // Soma a cor do tiro com a cor do fundo
+    gl.depthMask(false); // Permite que os tiros se sobreponham sem cortar a imagem uns dos outros
+
     for (let p of projectiles) {
         if (!p.active) continue;
         if(projectileMesh) {
             gl.uniform1i(programInfo.uniforms.u_useTexture, 0); 
-            gl.uniform4f(programInfo.uniforms.u_color, 1.0, 0.5, 0.0, 1.0); 
+            
+            gl.uniform1i(programInfo.uniforms.u_emissive, 1);
+            // Com o Blend ativo, usamos uma cor um pouco mais suave (Laranja claro)
+            // porque ela vai se somar com tudo atrás dela gerando o brilho extremo
+            gl.uniform4f(programInfo.uniforms.u_color, 1.0, 0.6, 0.1, 1.0); 
+            
             projectileMesh.modelMatrix = Matrix4.identity();
-            projectileMesh.modelMatrix[0] = 0.15; projectileMesh.modelMatrix[5] = 0.15; projectileMesh.modelMatrix[10] = 0.15;
+            projectileMesh.modelMatrix[0] = 0.08; 
+            projectileMesh.modelMatrix[5] = 0.08; 
+            projectileMesh.modelMatrix[10] = 0.08;
             projectileMesh.translate(p.x, p.y, p.z);
             aplicarLuzDinamica(); 
             projectileMesh.draw(programInfo);
+            
+            gl.uniform1i(programInfo.uniforms.u_emissive, 0);
         }
     }
+
+    // NOVO: Desliga tudo imediatamente para não deixar as paredes e a arma transparentes!
+    gl.disable(gl.BLEND);
+    gl.depthMask(true);
 
     // 5. DESENHA A ARMA HUD
     if (weaponMesh) {
@@ -373,6 +421,8 @@ function renderPlaying() {
         // ==========================================================
         gl.uniform3f(programInfo.uniforms.u_lightPosition, 0.0, 0.0, 0.0);
         gl.uniform3f(programInfo.uniforms.u_viewPosition, 0.0, 0.0, 0.0);
+
+        gl.uniform1i(programInfo.uniforms.u_numProjLights, 0); 
         
         gl.uniform1i(programInfo.uniforms.u_useTexture, 0); 
         gl.uniform4f(programInfo.uniforms.u_color, 1.0, 1.0, 1.0, 1.0); 
