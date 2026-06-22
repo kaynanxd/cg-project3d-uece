@@ -10,7 +10,7 @@ class Player {
         this.stamina = this.maxStamina;
         this.staminaCooldown = 0; // Cooldown quando zera
         this.isExhausted = false; // Bloqueia corrida enquanto recupera do zero
-
+        this.muzzleFlashFrames = 0;
         // Configurações de velocidade de movimentação
         this.walkSpeed = 0.08;
         this.runSpeed = 0.15; // Velocidade ao correr
@@ -39,6 +39,7 @@ class Player {
     shoot(cameraX, cameraY, cameraZ, yaw, pitch) {
         if (!this.canShoot()) return null;
         this.shootCooldown = 15; 
+        this.muzzleFlashFrames = 4
         AudioManager.play("gunshot", 0.4);
 
         let cosPitch = Math.cos(pitch);
@@ -79,6 +80,7 @@ class Player {
     update(inputHandler, isMoving) {
         if (this.shootCooldown > 0) this.shootCooldown--;
         if (this.damageAudioCooldown > 0) this.damageAudioCooldown--;
+        if (this.muzzleFlashFrames > 0) this.muzzleFlashFrames--;
 
         // Verifica se quer correr (Shift), está se movendo e não está exausto
         if (inputHandler.isPressed('shift') && isMoving && !this.isExhausted) {

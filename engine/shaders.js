@@ -40,36 +40,44 @@ fragmentSource: `
 
     uniform vec3 u_lightPosition;
     uniform vec3 u_viewPosition;
+    uniform vec3 u_lightColor; 
 
-    uniform float u_flash; // 0.0 (normal) a 1.0 (piscando totalmente)
+    uniform float u_flash; 
 
     void main() {
         vec3 normal = normalize(v_normal);
+        
+        // NOVO: Calcula a distância exata entre o objeto (parede/inimigo) e a luz (jogador)
+        float distance = length(u_lightPosition - v_position);
         vec3 lightDir = normalize(u_lightPosition - v_position);
         
-        // 1. Iluminação Ambiente
-        float ambientStrength = 0.3;
+        // NOVO: Fator de Atenuação. A luz perde força quadraticamente com a distância.
+        // Se a tela ficar muito escura, diminua esses valores (ex: 0.02 e 0.002).
+        float attenuation = 1.0 / (1.0 + 0.05 * distance + 0.005 * distance * distance);
+        
+        // 1. Iluminação Ambiente (Luz base do mapa para não ficar 100% preto)
+        float ambientStrength = 0.15; // Diminuído um pouco para o escuro ficar mais denso
         vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0);
         
-        // 2. Iluminação Difusa (Lambert)
+        // 2. Iluminação Difusa - MODIFICADO: Agora multiplica pela atenuação!
         float diff = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = diff * vec3(1.0, 1.0, 1.0);
+        vec3 diffuse = diff * u_lightColor * attenuation; 
         
-        // 3. Iluminação Especular (Brilho Metálico)
+        // 3. Iluminação Especular - MODIFICADO: Agora multiplica pela atenuação!
         float specularStrength = 0.8;
         vec3 viewDir = normalize(u_viewPosition - v_position);
         vec3 reflectDir = reflect(-lightDir, normal);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-        vec3 specular = specularStrength * spec * vec3(1.0, 1.0, 1.0);
+        vec3 specular = specularStrength * spec * u_lightColor * attenuation; 
         
         // Seleção de cor base
         vec4 baseColor = (u_useTexture == 1) ? texture2D(u_texture, v_texcoord) : (u_useVertexColors == 1 ? v_color : u_color);
         
-        // Aplicar o efeito de piscar (mistura com uma cor avermelhada/branca brilhante)
-        vec4 flashColor = vec4(1.0, 0.3, 0.3, 1.0); // Vermelho de dano
+        // Aplicar o efeito de piscar de dano do inimigo
+        vec4 flashColor = vec4(1.0, 0.3, 0.3, 1.0); 
         baseColor = mix(baseColor, flashColor, u_flash);
         
-        // Resultado final com iluminação
+        // Resultado final (O ambiente NÃO recebe atenuação, apenas a lanterna/tiro)
         vec3 lighting = ambient + diffuse + specular;
         gl_FragColor = vec4(lighting * baseColor.rgb, baseColor.a);
     }

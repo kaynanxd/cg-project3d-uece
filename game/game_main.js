@@ -78,6 +78,7 @@ async function initGame() {
             u_color: gl.getUniformLocation(program, "u_color"),
             u_lightPosition: gl.getUniformLocation(program, "u_lightPosition"),
             u_viewPosition: gl.getUniformLocation(program, "u_viewPosition"),
+            u_lightColor: gl.getUniformLocation(program, "u_lightColor"),
             u_flash: gl.getUniformLocation(program, "u_flash") // NOVO
         }
     };
@@ -263,6 +264,8 @@ function renderPlaying() {
     const projMatrix = Matrix4.perspective(60 * Math.PI / 180, aspect, 0.1, 200.0);
     const viewMatrix = camera.getViewMatrix();
 
+    gl.useProgram(program); // Garante que o programa está ativo antes de mandar as uniforms
+
     gl.uniformMatrix4fv(programInfo.uniforms.u_projection, false, projMatrix);
     gl.uniformMatrix4fv(programInfo.uniforms.u_view, false, viewMatrix);
 
@@ -270,13 +273,27 @@ function renderPlaying() {
     gl.uniform3f(programInfo.uniforms.u_lightPosition, camera.position.x, camera.position.y + 0.5, camera.position.z);
     gl.uniform3f(programInfo.uniforms.u_viewPosition, camera.position.x, camera.position.y, camera.position.z);
 
-    // 1. DESENHA O CHÃO (Usa textura se disponível, senão usa cinza escuro estático)
+    // ==========================================================
+    // FUNÇÃO AUXILIAR PARA GARANTIR A COR DA LUZ A CADA DESENHO
+    // ==========================================================
+    function aplicarLuzDinamica() {
+        if (player && player.muzzleFlashFrames > 0) {
+            // Amarelo super forte estourado
+            gl.uniform3f(programInfo.uniforms.u_lightColor, 3, 2, 0.2);
+        } else {
+            // Luz branca normal (lanterna)
+            gl.uniform3f(programInfo.uniforms.u_lightColor, 2.0, 2.0, 2.0);
+        }
+    }
+
+    // 1. DESENHA O CHÃO
     if (texFloor) {
         gl.uniform1i(programInfo.uniforms.u_useTexture, 1);
     } else {
         gl.uniform1i(programInfo.uniforms.u_useTexture, 0);
         gl.uniform4f(programInfo.uniforms.u_color, 0.2, 0.2, 0.2, 1.0);
     }
+    aplicarLuzDinamica(); // Garante a luz antes de desenhar o chão
     floorMesh.modelMatrix = Matrix4.identity();
     floorMesh.draw(programInfo);
 
@@ -286,7 +303,7 @@ function renderPlaying() {
             gl.uniform1i(programInfo.uniforms.u_useTexture, 1);
         } else {
             gl.uniform1i(programInfo.uniforms.u_useTexture, 0);
-            gl.uniform4f(programInfo.uniforms.u_color, 0.4, 0.4, 0.4, 1.0); // Paredes cinzas caso falte textura
+            gl.uniform4f(programInfo.uniforms.u_color, 0.4, 0.4, 0.4, 1.0);
         }
         
         for (let z = 0; z < levelMap.length; z++) {
@@ -294,16 +311,17 @@ function renderPlaying() {
                 if (levelMap[z][x] === 1) {
                     wallMesh.modelMatrix = Matrix4.identity();
                     wallMesh.modelMatrix[0] = TILE_SIZE/2; 
-                    wallMesh.modelMatrix[5] = 2.0; // Altura da parede
+                    wallMesh.modelMatrix[5] = 2.0; 
                     wallMesh.modelMatrix[10] = TILE_SIZE/2;
                     wallMesh.translate(x * TILE_SIZE, 2.0, z * TILE_SIZE);
+                    aplicarLuzDinamica(); // Garante a luz antes de desenhar cada bloco de parede
                     wallMesh.draw(programInfo);
                 }
             }
         }
     }
 
-    // 3. DESENHA INIMIGOS (Sem textura -> Cor sólida interpretada com iluminação de Phong)
+    // 3. DESENHA INIMIGOS
     gl.uniform1i(programInfo.uniforms.u_useTexture, 0); 
     gl.uniform4f(programInfo.uniforms.u_color, 1.0, 1.0, 1.0, 1.0); 
 
@@ -312,89 +330,75 @@ function renderPlaying() {
         let mesh = e.isBoss ? bossMesh : enemyMesh;
         if(mesh) {
             let m = Matrix4.identity();
-            
-            if (e.isBoss) {
-                m[0] = 2.0; m[5] = 2.0; m[10] = 2.0;
-            }
-            
+            if (e.isBoss) { m[0] = 3.0; m[5] = 3.0; m[10] = 3.0; }
             let ajusteModelo = Math.PI / 30; 
             let rotY = Matrix4.rotationY(e.yaw + ajusteModelo);
             m = Matrix4.multiply(rotY, m);
-            
             let tMat = Matrix4.translation(e.x, e.y, e.z);
             m = Matrix4.multiply(tMat, m);
-            
             mesh.modelMatrix = m;
 
-            // NOVO: Se o inimigo tiver frames de flash ativos, manda 1.0 pro shader, se não 0.0
             let flashValue = e.flashFrames > 0 ? 1.0 : 0.0;
             gl.uniform1f(programInfo.uniforms.u_flash, flashValue);
             
+            aplicarLuzDinamica(); // Garante a luz antes do inimigo
             mesh.draw(programInfo);
         }
     }
 
-    // NOVO: Reseta o u_flash para 0.0 para que não afete os projéteis e a arma desenhados depois
     gl.uniform1f(programInfo.uniforms.u_flash, 0.0);
-    // 4. DESENHA PROJÉTEIS (Esferas)
+
+    // 4. DESENHA PROJÉTEIS
     for (let p of projectiles) {
         if (!p.active) continue;
         if(projectileMesh) {
             gl.uniform1i(programInfo.uniforms.u_useTexture, 0); 
-            gl.uniform4f(programInfo.uniforms.u_color, 1.0, 0.5, 0.0, 1.0); // Laranja plasma
+            gl.uniform4f(programInfo.uniforms.u_color, 1.0, 0.5, 0.0, 1.0); 
             projectileMesh.modelMatrix = Matrix4.identity();
             projectileMesh.modelMatrix[0] = 0.15; projectileMesh.modelMatrix[5] = 0.15; projectileMesh.modelMatrix[10] = 0.15;
             projectileMesh.translate(p.x, p.y, p.z);
+            aplicarLuzDinamica(); 
             projectileMesh.draw(programInfo);
         }
     }
 
-// 5. DESENHA A ARMA HUD (Sem textura -> Aplicado cinza metálico com Phong)
+    // 5. DESENHA A ARMA HUD
     if (weaponMesh) {
         gl.clear(gl.DEPTH_BUFFER_BIT);
         gl.uniformMatrix4fv(programInfo.uniforms.u_view, false, Matrix4.identity());
+        
+        // ==========================================================
+        // NOVO: Traz a luz para a origem (0,0,0) apenas para a arma, 
+        // burlando o cálculo de distância do Shader!
+        // ==========================================================
+        gl.uniform3f(programInfo.uniforms.u_lightPosition, 0.0, 0.0, 0.0);
+        gl.uniform3f(programInfo.uniforms.u_viewPosition, 0.0, 0.0, 0.0);
         
         gl.uniform1i(programInfo.uniforms.u_useTexture, 0); 
         gl.uniform4f(programInfo.uniforms.u_color, 1.0, 1.0, 1.0, 1.0); 
         
         let recoilOffsetZ = (player.shootCooldown / 15.0) * 0.25; 
-        let recoilOffsetY = (player.shootCooldown / 15.0) * 0.04; 
+        let recoilOffsetY = (player.shootCooldown / 15.0) * 0.04;
 
-        // ==========================================
-        // NOVO: CÁLCULO DO BALANÇO (BOBBING)
-        // ==========================================
         let bobX = 0;
         let bobY = 0;
-
         if (bobbingTimer > 0) {
-            // Math.sin faz mover para os lados. Multiplicamos por 0.03 para o movimento ser sutil.
             bobX = Math.sin(bobbingTimer) * 0.03;
-            // Math.cos com o dobro da velocidade faz um movimento em formato de "8" ou "U" (sobe e desce a cada passo)
             bobY = Math.cos(bobbingTimer * 2) * 0.015;
         }
-        // ==========================================
 
         let m = Matrix4.identity();
-        
-        // 1º Escala
         m[0] = 0.2; m[5] =  0.2; m[10] =  0.2;
-        
-        // 2º Rotação Manual
         let rotArmaY = Matrix4.rotationY(1.5); 
         let rotArmaX = Matrix4.rotationX(0);          
-        
         m = Matrix4.multiply(rotArmaY, m);
         m = Matrix4.multiply(rotArmaX, m);
 
-        // 3º Translação: Adicionado bobX e bobY nas coordenadas de posicionamento da arma
-        let tMat = Matrix4.translation(
-            0.45 + bobX,                        // Eixo X (Balança pros lados)
-            -0.55 + recoilOffsetY + bobY,       // Eixo Y (Recoil + Balança pra cima/baixo)
-            -1.2 + recoilOffsetZ                // Eixo Z (Recoil para trás)
-        );
+        let tMat = Matrix4.translation(0.45 + bobX, -0.55 + recoilOffsetY + bobY, -1.2 + recoilOffsetZ);
         m = Matrix4.multiply(tMat, m);
 
         weaponMesh.modelMatrix = m;
+        aplicarLuzDinamica(); // Garante a luz na arma
         weaponMesh.draw(programInfo);
     }
 }
