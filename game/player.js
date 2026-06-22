@@ -26,7 +26,12 @@ class Player {
         ];
         this.currentWeaponIndex = 0; // Começa com a pistola
 
-        updateHUD(this.hp, this.stamina);
+        // Power-up attributes
+        this.damage = 50;
+        this.extraLives = 0;
+        this.piercingLevel = 0;
+
+        updateHUD(this);
     }
 
     // Função para trocar de arma
@@ -43,8 +48,14 @@ class Player {
             this.damageAudioCooldown = 60;
         }
         this.hp -= amount;
+
+        if (this.hp <= 0 && this.extraLives > 0) {
+            this.extraLives--;
+            this.hp = this.maxHp;
+        }
+
         if (this.hp < 0) this.hp = 0;
-        updateHUD(this.hp, this.stamina);
+        updateHUD(this);
         
         document.getElementById('ui-layer').style.backgroundColor = "rgba(255, 0, 0, 0.3)";
         setTimeout(() => document.getElementById('ui-layer').style.backgroundColor = "transparent", 100);
@@ -145,12 +156,18 @@ class Player {
                 }
             }
         }
-        updateHUD(this.hp, this.stamina);
+
+        updateHUD(this);
     }
     
 }
 
-function updateHUD(hp, stamina) {
-    document.getElementById('hud-hp').innerText = hp;
-    document.getElementById('hud-stamina').innerText = Math.floor(stamina);
+function updateHUD(player) {
+    document.getElementById('hud-hp').innerText = Math.floor(player.hp);
+    document.getElementById('hud-maxhp').innerText = player.maxHp;
+    document.getElementById('hud-stamina').innerText = Math.floor(player.stamina);
+    document.getElementById('hud-maxstamina').innerText = player.maxStamina;
+    document.getElementById('hud-damage').innerText = player.damage;
+    document.getElementById('hud-lives').innerText = player.extraLives;
+    document.getElementById('hud-piercing').innerText = player.piercingLevel;
 }
