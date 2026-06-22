@@ -21,21 +21,40 @@ let gl, program, programInfo, camera, input;
 
 // Meshes
 let enemyMesh, bossMesh, projectileMesh, floorMesh, wallMesh, weaponMesh;
+
+let lapide1Mesh, lapide2Mesh, estatuaMesh;
 // Texturas do Cenário (Mantenha arquivos reais chao.jpg e parede.jpg na pasta assets/)
 let texFloor, texWall;
 
 // Mapa simples para as paredes (1 = Parede, 0 = Vazio)
 const levelMap = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,4,0,0,0,0,0,0,0,0,0,0,4,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,3,0,0,0,0,0,0,0,0,0,0,3,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
-const TILE_SIZE = 8.0;
+const TILE_SIZE = 4.0;
 const PLAYER_RADIUS = 0.4;
+
+const PLAYER_SPAWN_GRID_X = 20; 
+const PLAYER_SPAWN_GRID_Z = 20;
 
 function isWallBlocking(x, z, radius) {
     const half = TILE_SIZE / 2;
@@ -128,12 +147,14 @@ async function initGame() {
     };
     input = new InputHandler("glcanvas1");
     // Jogador nasce em uma posição inicial válida dentro do mapa
-    camera = new FPSCamera(2 * TILE_SIZE, 1.5, 2 * TILE_SIZE); 
+    camera = new FPSCamera(7 * TILE_SIZE, 1.5, 7 * TILE_SIZE); 
 
     // --- CARREGAMENTO DE TEXTURAS (CENÁRIO) ---
+// --- CARREGAMENTO DE TEXTURAS (CENÁRIO) ---
     try {
         texFloor = await TextureManager.loadTexture(gl, "assets/chao.jpg");
-        texWall = await TextureManager.loadTexture(gl, "assets/parede.jpg");
+        // AQUI ESTÁ O NOME DA TEXTURA NOVA:
+        texWall = await TextureManager.loadTexture(gl, "assets/parede_nova.jpg"); 
     } catch (e) {
         console.warn("Texturas do cenário não encontradas. Ficarão com cores sólidas.");
     }
@@ -144,12 +165,17 @@ async function initGame() {
         bossMesh = await OBJLoader.load(gl, "assets/boss.obj");
         projectileMesh = await OBJLoader.load(gl, "assets/esfera.obj"); 
         
-        // NOVO: Carregando todas as armas
         weaponMeshes['pistola'] = await OBJLoader.load(gl, "assets/armapistola.obj");
         weaponMeshes['akm'] = await OBJLoader.load(gl, "assets/arma.obj");
         weaponMeshes['escopeta'] = await OBJLoader.load(gl, "assets/armaescopeta.obj");
         
         wallMesh = await OBJLoader.load(gl, "assets/cubo.obj"); 
+        
+        // NOVO: Carregando os props do cenário
+        lapide1Mesh = await OBJLoader.load(gl, "assets/gravestone.obj");
+        lapide2Mesh = await OBJLoader.load(gl, "assets/gravestone2.obj");
+        estatuaMesh = await OBJLoader.load(gl, "assets/AngelStatue.obj");
+        
     } catch (e) {
         console.error("Erro crítico ao carregar os arquivos .obj em assets/!", e);
     }
@@ -419,12 +445,27 @@ function updatePlaying() {
     for (let e of enemies) {
         if (!e.active) continue;
         livingEnemies++;
+        
         const oldEX = e.x;
         const oldEZ = e.z;
+        
+        // Executa o movimento gerado pela IA do inimigo
         e.update(camera.position.x, camera.position.z, player);
+        
+        const newEX = e.x;
+        const newEZ = e.z;
+        
+        // Tenta mover primeiro apenas no eixo X
+        e.x = newEX;
+        e.z = oldEZ;
         if (isWallBlocking(e.x, e.z, e.radius)) {
-            e.x = oldEX;
-            e.z = oldEZ;
+            e.x = oldEX; // Se colidir em X, desfaz
+        }
+        
+        // Tenta mover agora no eixo Z
+        e.z = newEZ;
+        if (isWallBlocking(e.x, e.z, e.radius)) {
+            e.z = oldEZ; // Se colidir em Z, desfaz
         }
 
         for (let p of projectiles) {
@@ -596,25 +637,65 @@ function renderPlaying() {
     floorMesh.draw(programInfo);
 
     // 2. DESENHA AS PAREDES
-    if(wallMesh) {
-        if (texWall) {
-            gl.uniform1i(programInfo.uniforms.u_useTexture, 1);
-        } else {
-            gl.uniform1i(programInfo.uniforms.u_useTexture, 0);
-            gl.uniform4f(programInfo.uniforms.u_color, 0.4, 0.4, 0.4, 1.0);
-        }
-        
-        for (let z = 0; z < levelMap.length; z++) {
-            for (let x = 0; x < levelMap[z].length; x++) {
-                if (levelMap[z][x] === 1) {
-                    wallMesh.modelMatrix = Matrix4.identity();
-                    wallMesh.modelMatrix[0] = TILE_SIZE/2; 
-                    wallMesh.modelMatrix[5] = 2.0; 
-                    wallMesh.modelMatrix[10] = TILE_SIZE/2;
-                    wallMesh.translate(x * TILE_SIZE, 2.0, z * TILE_SIZE);
-                    aplicarLuzDinamica(); // Garante a luz antes de desenhar cada bloco de parede
-                    wallMesh.draw(programInfo);
+// 2. DESENHA AS PAREDES E OBJETOS DO CENÁRIO (Lápides e Estátuas)
+    for (let z = 0; z < levelMap.length; z++) {
+        for (let x = 0; x < levelMap[z].length; x++) {
+            let tileId = levelMap[z][x];
+            if (tileId === 0) continue; // Pula os espaços vazios
+
+            let currentMesh = null;
+            let currentScaleY = 1.0;
+            let posY = 0.0;
+
+            // Define qual malha usar baseado no ID do mapa
+            if (tileId === 1 && wallMesh) {
+                currentMesh = wallMesh;
+                currentScaleY = 2.0; 
+                posY = 2.0; // Parede flutua um pouco para alinhar o cubo
+                if (texWall) {
+                    gl.uniform1i(programInfo.uniforms.u_useTexture, 1);
+                } else {
+                    gl.uniform1i(programInfo.uniforms.u_useTexture, 0);
+                    gl.uniform4f(programInfo.uniforms.u_color, 0.4, 0.4, 0.4, 1.0);
                 }
+            } 
+            else if (tileId === 2 && lapide1Mesh) {
+                currentMesh = lapide1Mesh;
+                gl.uniform1i(programInfo.uniforms.u_useTexture, 0);
+                gl.uniform4f(programInfo.uniforms.u_color, 0.5, 0.5, 0.55, 1.0); // Cinza azulado
+            }
+            else if (tileId === 3 && lapide2Mesh) {
+                currentMesh = lapide2Mesh;
+                gl.uniform1i(programInfo.uniforms.u_useTexture, 0);
+                gl.uniform4f(programInfo.uniforms.u_color, 0.35, 0.35, 0.35, 1.0); // Cinza escuro
+            }
+            else if (tileId === 4 && estatuaMesh) {
+                currentMesh = estatuaMesh;
+                gl.uniform1i(programInfo.uniforms.u_useTexture, 0);
+                gl.uniform4f(programInfo.uniforms.u_color, 0.4, 0.5, 0.4, 1.0); // Verde musgo / Bronze
+            }
+
+            // Se o objeto estiver carregado, desenha na tela
+            if (currentMesh) {
+                currentMesh.modelMatrix = Matrix4.identity();
+                
+                // As paredes precisam de escala para preencher o Tile, os props não
+                if (tileId === 1) {
+                    currentMesh.modelMatrix[0] = TILE_SIZE / 2; 
+                    currentMesh.modelMatrix[10] = TILE_SIZE / 2;
+                } else {
+                    // Se as lápides/estátuas ficarem pequenas, aumente este valor (ex: 2.0)
+                    let propScale = 2.0; 
+                    currentMesh.modelMatrix[0] = propScale;
+                    currentMesh.modelMatrix[10] = propScale;
+                    currentScaleY = propScale;
+                }
+                
+                currentMesh.modelMatrix[5] = currentScaleY; 
+                currentMesh.translate(x * TILE_SIZE, posY, z * TILE_SIZE);
+                
+                aplicarLuzDinamica(); // Ilumina o objeto
+                currentMesh.draw(programInfo);
             }
         }
     }
