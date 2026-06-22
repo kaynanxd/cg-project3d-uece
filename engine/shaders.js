@@ -38,56 +38,64 @@ fragmentSource: `
     uniform int u_useVertexColors;
     uniform vec4 u_color;
 
-    // --- LUZ DO JOGADOR ---
+    // --- LUZ DO JOGADOR (SPOTLIGHT) ---
     uniform vec3 u_lightPosition;
     uniform vec3 u_viewPosition;
     uniform vec3 u_lightColor; 
+    uniform vec3 u_lightDirection; // NOVO: Para onde a lanterna aponta
+    uniform float u_lightCutOff; // NOVO: Borda interna do cone (luz forte)
+    uniform float u_lightOuterCutOff; // NOVO: Borda externa do cone (esmaecimento)
 
     // --- LUZES DOS PROJÉTEIS ---
-    uniform int u_numProjLights; // Quantos projéteis ativos
-    uniform vec3 u_projLightPositions[5]; // Posições (Max 5)
-    uniform vec3 u_projLightColors[5]; // Cores (Max 5)
+    uniform int u_numProjLights; 
+    uniform vec3 u_projLightPositions[5]; 
+    uniform vec3 u_projLightColors[5]; 
 
     uniform float u_flash; 
-    uniform int u_emissive; // NOVO: Interruptor para brilho próprio (Glow)
+    uniform int u_emissive; 
 
     void main() {
         vec3 normal = normalize(v_normal);
         vec3 viewDir = normalize(u_viewPosition - v_position);
         
-        // 1. Iluminação Ambiente
-        float ambientStrength = 0.15;
+        // 1. Iluminação Ambiente (Diminuímos para quase zero para ficar um breu total fora do cone)
+        float ambientStrength = 0.02; 
         vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0);
         
-        // Variáveis acumuladoras para toda a luz do mapa
         vec3 totalDiffuse = vec3(0.0);
         vec3 totalSpecular = vec3(0.0);
 
         // ==========================================
-        // CÁLCULO 1: LUZ DO JOGADOR (Lanterna / Tiro)
+        // CÁLCULO 1: LUZ DO JOGADOR (LANTERNA / SPOTLIGHT)
         // ==========================================
-        float distPlayer = length(u_lightPosition - v_position);
         vec3 lightDirPlayer = normalize(u_lightPosition - v_position);
+        
+        // Calcula o ângulo entre a direção do pixel e o centro do foco da lanterna
+        float theta = dot(lightDirPlayer, normalize(-u_lightDirection));
+        
+        // Suaviza as bordas da luz (Efeito de penumbra)
+        float epsilon = u_lightCutOff - u_lightOuterCutOff;
+        float intensity = clamp((theta - u_lightOuterCutOff) / epsilon, 0.0, 1.0);
+        
+        // Atenuação normal pela distância
+        float distPlayer = length(u_lightPosition - v_position);
         float attPlayer = 1.0 / (1.0 + 0.05 * distPlayer + 0.005 * distPlayer * distPlayer);
         
+        // Aplica a intensidade do foco no diffuse e specular
         float diffPlayer = max(dot(normal, lightDirPlayer), 0.0);
-        totalDiffuse += diffPlayer * u_lightColor * attPlayer; 
+        totalDiffuse += diffPlayer * u_lightColor * attPlayer * intensity; 
         
         vec3 reflectDirPlayer = reflect(-lightDirPlayer, normal);
         float specPlayer = pow(max(dot(viewDir, reflectDirPlayer), 0.0), 32.0);
-        totalSpecular += 0.8 * specPlayer * u_lightColor * attPlayer; 
+        totalSpecular += 0.8 * specPlayer * u_lightColor * attPlayer * intensity; 
 
         // ==========================================
-        // CÁLCULO 2: LUZES DOS PROJÉTEIS
+        // CÁLCULO 2: LUZES DOS PROJÉTEIS (Continua igual, irradiando pra todo lado)
         // ==========================================
-        // No WebGL 1.0, os loops precisam de um limite numérico fixo (5)
         for(int i = 0; i < 5; i++) {
-            if (i >= u_numProjLights) break; // Para o cálculo se não tiver mais projéteis
-            
+            if (i >= u_numProjLights) break; 
             float distProj = length(u_projLightPositions[i] - v_position);
-            // Atenuação diferente (luz do tiro morre mais rápido que a lanterna)
             float attProj = 1.0 / (1.0 + 0.05 * distProj + 0.005 * distProj * distProj);
-            
             vec3 lightDirProj = normalize(u_projLightPositions[i] - v_position);
             
             float diffProj = max(dot(normal, lightDirProj), 0.0);
@@ -98,20 +106,15 @@ fragmentSource: `
             totalSpecular += 0.8 * specProj * u_projLightColors[i] * attProj;
         }
         
-        // Seleção de cor base e flash de dano
         vec4 baseColor = (u_useTexture == 1) ? texture2D(u_texture, v_texcoord) : (u_useVertexColors == 1 ? v_color : u_color);
         vec4 flashColor = vec4(1.0, 0.3, 0.3, 1.0); 
         baseColor = mix(baseColor, flashColor, u_flash);
         
-        // ==========================================================
-        // MATERIAL EMISSIVO (Ignora as sombras do mapa para brilhar)
-        // ==========================================================
         if (u_emissive == 1) {
             gl_FragColor = baseColor;
-            return; // Interrompe o shader aqui para não aplicar escuridão
+            return; 
         }
 
-        // Resultado final soma ambiente + luzes (apenas se não for emissivo)
         vec3 lighting = ambient + totalDiffuse + totalSpecular;
         gl_FragColor = vec4(lighting * baseColor.rgb, baseColor.a);
     }

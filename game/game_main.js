@@ -80,6 +80,9 @@ async function initGame() {
             u_viewPosition: gl.getUniformLocation(program, "u_viewPosition"),
             u_lightColor: gl.getUniformLocation(program, "u_lightColor"),
             u_flash: gl.getUniformLocation(program, "u_flash") ,// NOVO
+            u_lightDirection: gl.getUniformLocation(program, "u_lightDirection"),
+            u_lightCutOff: gl.getUniformLocation(program, "u_lightCutOff"),
+            u_lightOuterCutOff: gl.getUniformLocation(program, "u_lightOuterCutOff"),
             u_numProjLights: gl.getUniformLocation(program, "u_numProjLights"),
             u_projLightPositions: gl.getUniformLocation(program, "u_projLightPositions"),
             u_projLightColors: gl.getUniformLocation(program, "u_projLightColors"),
@@ -277,6 +280,29 @@ function renderPlaying() {
     // Sistema de iluminação: Lanterna na cara do jogador
     gl.uniform3f(programInfo.uniforms.u_lightPosition, camera.position.x, camera.position.y + 0.5, camera.position.z);
     gl.uniform3f(programInfo.uniforms.u_viewPosition, camera.position.x, camera.position.y, camera.position.z);
+    // ==========================================================
+    // NOVO: MATEMÁTICA DO FOCO DA LANTERNA
+    // ==========================================================
+    // 1. Calcula o vetor de direção baseado para onde o jogador olha
+    let sinYawCam = Math.sin(camera.yaw);
+    let cosYawCam = Math.cos(camera.yaw);
+    let sinPitchCam = Math.sin(camera.pitch);
+    let cosPitchCam = Math.cos(camera.pitch);
+
+    let camDirX = -sinYawCam * cosPitchCam;
+    let camDirY = sinPitchCam;
+    let camDirZ = -cosYawCam * cosPitchCam;
+
+    // Envia a direção exata da câmera para a lanterna
+    gl.uniform3f(programInfo.uniforms.u_lightDirection, camDirX, camDirY, camDirZ);
+    
+
+    // 2. Define o tamanho do "cone" de luz. 
+    // Math.cos é usado porque o Shader calcula luz via Produto Escalar (dot product)
+    // 12.5 graus é o círculo forte no meio, 17.5 graus é onde a luz morre (suave)
+    gl.uniform1f(programInfo.uniforms.u_lightCutOff, Math.cos(30 * Math.PI / 180));
+    gl.uniform1f(programInfo.uniforms.u_lightOuterCutOff, Math.cos(40 * Math.PI / 180));
+    // ==========================================================
 
     let activeProjs = projectiles.filter(p => p.active);
     let numProjLights = Math.min(activeProjs.length, 5);
@@ -416,11 +442,18 @@ function renderPlaying() {
         gl.uniformMatrix4fv(programInfo.uniforms.u_view, false, Matrix4.identity());
         
         // ==========================================================
-        // NOVO: Traz a luz para a origem (0,0,0) apenas para a arma, 
-        // burlando o cálculo de distância do Shader!
+        // NOVO: CONFIGURAÇÃO DE LUZ EXCLUSIVA PARA A ARMA
         // ==========================================================
-        gl.uniform3f(programInfo.uniforms.u_lightPosition, 0.0, 0.0, 0.0);
-        gl.uniform3f(programInfo.uniforms.u_viewPosition, 0.0, 0.0, 0.0);
+        // Coloca a luz para trás (Z = 2.0) e um pouco para cima (Y = 1.0) para bater no metal
+        gl.uniform3f(programInfo.uniforms.u_lightPosition, 0.0, 1.0, 2.0);
+        gl.uniform3f(programInfo.uniforms.u_viewPosition, 0.0, 0.0, 2.0);
+        
+        // Força a direção da lanterna para o fundo da tela (-Z) apenas para o HUD
+        gl.uniform3f(programInfo.uniforms.u_lightDirection, 0.0, 0.0, -1.0);
+        
+        // Cone super aberto apenas para a arma não ficar no escuro
+        gl.uniform1f(programInfo.uniforms.u_lightCutOff, Math.cos(45.0 * Math.PI / 180));
+        gl.uniform1f(programInfo.uniforms.u_lightOuterCutOff, Math.cos(60.0 * Math.PI / 180));
 
         gl.uniform1i(programInfo.uniforms.u_numProjLights, 0); 
         
