@@ -13,6 +13,7 @@ let currentDifficulty;
 let player, hordeManager;
 let enemies = [];
 let projectiles = [];
+let bobbingTimer = 0;
 
 let gl, program, programInfo, camera, input;
 
@@ -193,6 +194,19 @@ function updatePlaying() {
     // 3. Atualiza a câmera injetando a velocidade resultante do player
     camera.update(input, player.currentSpeed);
 
+    if (isMovingInput) {
+        // Se estiver correndo (velocidade maior), o balanço é mais rápido
+        let bobSpeed = player.currentSpeed > 0.1 ? 0.25 : 0.15;
+        bobbingTimer += bobSpeed;
+    } else {
+        // Se parar de andar, a arma volta suavemente para a posição inicial (0)
+        bobbingTimer %= Math.PI * 2;
+        if (bobbingTimer > 0) {
+            bobbingTimer -= 0.1;
+            if (bobbingTimer < 0) bobbingTimer = 0;
+        }
+    }
+
     
 
     if (typeof Enemy !== 'undefined' && Enemy.globalGrowlCooldown > 0) {
@@ -335,7 +349,7 @@ function renderPlaying() {
         }
     }
 
-    // 5. DESENHA A ARMA HUD (Sem textura -> Aplicado cinza metálico com Phong)
+// 5. DESENHA A ARMA HUD (Sem textura -> Aplicado cinza metálico com Phong)
     if (weaponMesh) {
         gl.clear(gl.DEPTH_BUFFER_BIT);
         gl.uniformMatrix4fv(programInfo.uniforms.u_view, false, Matrix4.identity());
@@ -346,22 +360,38 @@ function renderPlaying() {
         let recoilOffsetZ = (player.shootCooldown / 15.0) * 0.25; 
         let recoilOffsetY = (player.shootCooldown / 15.0) * 0.04; 
 
+        // ==========================================
+        // NOVO: CÁLCULO DO BALANÇO (BOBBING)
+        // ==========================================
+        let bobX = 0;
+        let bobY = 0;
+
+        if (bobbingTimer > 0) {
+            // Math.sin faz mover para os lados. Multiplicamos por 0.03 para o movimento ser sutil.
+            bobX = Math.sin(bobbingTimer) * 0.03;
+            // Math.cos com o dobro da velocidade faz um movimento em formato de "8" ou "U" (sobe e desce a cada passo)
+            bobY = Math.cos(bobbingTimer * 2) * 0.015;
+        }
+        // ==========================================
+
         let m = Matrix4.identity();
         
-        // 1º Escala: Se a arma estiver muito grande/pequena, mude o 1.0 aqui
+        // 1º Escala
         m[0] = 0.2; m[5] =  0.2; m[10] =  0.2;
         
-        // 2º Rotação Manual: É AQUI QUE VOCÊ ARRUMA A ARMA!
-        // Math.PI = 180 graus | Math.PI / 2 = 90 graus
-        // Teste mudar o sinal (ex: -Math.PI / 2) para girar pro lado certo
-        let rotArmaY = Matrix4.rotationY(1.5); // Vira a arma pra frente
-        let rotArmaX = Matrix4.rotationX(0);          // Levanta/abaixa o cano
+        // 2º Rotação Manual
+        let rotArmaY = Matrix4.rotationY(1.5); 
+        let rotArmaX = Matrix4.rotationX(0);          
         
         m = Matrix4.multiply(rotArmaY, m);
         m = Matrix4.multiply(rotArmaX, m);
 
-        // 3º Translação: Gruda no canto da tela com o recoil aplicado
-        let tMat = Matrix4.translation(0.45, -0.55 + recoilOffsetY, -1.2 + recoilOffsetZ);
+        // 3º Translação: Adicionado bobX e bobY nas coordenadas de posicionamento da arma
+        let tMat = Matrix4.translation(
+            0.45 + bobX,                        // Eixo X (Balança pros lados)
+            -0.55 + recoilOffsetY + bobY,       // Eixo Y (Recoil + Balança pra cima/baixo)
+            -1.2 + recoilOffsetZ                // Eixo Z (Recoil para trás)
+        );
         m = Matrix4.multiply(tMat, m);
 
         weaponMesh.modelMatrix = m;
