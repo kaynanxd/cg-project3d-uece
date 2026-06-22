@@ -1,6 +1,6 @@
 // game/game_main.js
 
-const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3 , PAUSED: 4};
+const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3 , PAUSED: 4, UPGRADING: 5};
 let currentState = GameState.MENU;
 
 const DifficultyConfig = {
@@ -175,6 +175,23 @@ async function initGame() {
             mouseJustPressed = true;
         }
     });
+  
+    // Escuta a tecla Q do teclado para atirar
+    document.addEventListener('keydown', (e) => {
+        if (currentState === GameState.PLAYING && document.pointerLockElement === canvas && (e.key === 'q' || e.key === 'Q')) {
+            let proj = player.shoot(camera.position.x, camera.position.y, camera.position.z, camera.yaw, camera.pitch);
+            if (proj) projectiles.push(proj);
+        }
+    });
+    // Clique nos cards de upgrade
+    document.getElementById('upgrade-choices').addEventListener('click', (e) => {
+        let card = e.target.closest('.upgrade-card');
+        if (!card) return;
+        let typeId = card.dataset.id;
+        let type = POWERUP_TYPES.find(t => t.id === typeId);
+        if (!type) return;
+        selectUpgrade(type);
+    });
 
     canvas.addEventListener('mouseup', (e) => {
         if (e.button === 0) isMouseDown = false;
@@ -233,9 +250,43 @@ async function startGame(diffStr) {
     currentState = GameState.PLAYING;
 }
 
+function showUpgradeSelection() {
+    currentState = GameState.UPGRADING;
+    document.exitPointerLock();
+
+    let shuffled = [...POWERUP_TYPES].sort(() => Math.random() - 0.5);
+    let choices = shuffled.slice(0, 3);
+
+    let container = document.getElementById('upgrade-choices');
+    container.innerHTML = '';
+    for (let type of choices) {
+        let card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.dataset.id = type.id;
+        card.innerHTML = '<div class="upgrade-name">' + type.name + '</div><div class="upgrade-desc">' + type.desc + '</div>';
+        container.appendChild(card);
+    }
+
+    document.getElementById('upgrade-screen').style.display = 'flex';
+}
+
+function selectUpgrade(type) {
+    type.apply(player);
+    updateHUD(player);
+
+    document.getElementById('upgrade-screen').style.display = 'none';
+
+    enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
+
+    currentState = GameState.PLAYING;
+    document.getElementById('glcanvas1').requestPointerLock();
+}
+
 function gameLoop() {
     if (currentState === GameState.PLAYING) {
         updatePlaying();
+        renderPlaying();
+    } else if (currentState === GameState.UPGRADING) {
         renderPlaying();
     }
     requestAnimationFrame(gameLoop);
@@ -335,7 +386,11 @@ function updatePlaying() {
             
             if (dist < e.radius) {
                 e.takeDamage(p.damage);
-                p.active = false; 
+                if (p.piercingLeft > 0) {
+                    p.piercingLeft--;
+                } else {
+                    p.active = false;
+                }
             }
         }
     }
@@ -343,7 +398,7 @@ function updatePlaying() {
     if (livingEnemies === 0) {
         let status = hordeManager.checkProgress(0);
         if (status === "NEXT_HORDE") {
-            enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
+            showUpgradeSelection();
         } else if (status === "VICTORY") {
             currentState = GameState.VICTORY;
             document.exitPointerLock();
