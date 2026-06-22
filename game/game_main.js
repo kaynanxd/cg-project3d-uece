@@ -4,9 +4,9 @@ const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3 , PAUSED: 4};
 let currentState = GameState.MENU;
 
 const DifficultyConfig = {
-    EASY:   { hordeCount: 3, baseEnemies: 3,  enemySpeed: 0.04, enemyHp: 70,  bossHp: 300 },
-    NORMAL: { hordeCount: 5, baseEnemies: 6,  enemySpeed: 0.06, enemyHp: 100, bossHp: 600 },
-    HARD:   { hordeCount: 7, baseEnemies: 10, enemySpeed: 0.08, enemyHp: 150, bossHp: 1000 }
+    EASY:   { hordeCount: 3, baseEnemies: 3,  enemySpeed: 0.04, enemyHp: 70,  bossHp: 600 ,bossSpeed: 0.06},
+    NORMAL: { hordeCount: 5, baseEnemies: 6,  enemySpeed: 0.06, enemyHp: 100, bossHp: 1000 ,bossSpeed: 0.010},
+    HARD:   { hordeCount: 7, baseEnemies: 10, enemySpeed: 0.08, enemyHp: 150, bossHp: 1500 , bossSpeed: 0.15}
 };
 
 let currentDifficulty;
@@ -164,7 +164,7 @@ async function startGame(diffStr) {
     currentDifficulty = DifficultyConfig[diffStr];
     player = new Player();
     hordeManager = new HordeManager(currentDifficulty);
-    enemies = hordeManager.spawnHorde();
+    enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
     projectiles = [];
 
     document.getElementById("menu-screen").style.display = "none";
@@ -246,7 +246,7 @@ function updatePlaying() {
     if (livingEnemies === 0) {
         let status = hordeManager.checkProgress(0);
         if (status === "NEXT_HORDE") {
-            enemies = hordeManager.spawnHorde();
+            enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
         } else if (status === "VICTORY") {
             currentState = GameState.VICTORY;
             document.exitPointerLock();
@@ -314,7 +314,7 @@ function renderPlaying() {
             let m = Matrix4.identity();
             
             if (e.isBoss) {
-                m[0] = 3.0; m[5] = 3.0; m[10] = 3.0;
+                m[0] = 2.0; m[5] = 2.0; m[10] = 2.0;
             }
             
             let ajusteModelo = Math.PI / 30; 
