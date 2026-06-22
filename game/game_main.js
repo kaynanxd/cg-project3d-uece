@@ -395,6 +395,51 @@ function updatePlaying() {
         }
     }
 
+    for (let i = 0; i < enemies.length; i++) {
+        const e1 = enemies[i];
+        if (!e1.active || e1.isDying) continue;
+        for (let j = i + 1; j < enemies.length; j++) {
+            const e2 = enemies[j];
+            if (!e2.active || e2.isDying) continue;
+
+            const dx = e2.x - e1.x;
+            const dz = e2.z - e1.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            const minDist = e1.radius + e2.radius;
+
+            if (dist >= minDist) continue;
+
+            const overlap = minDist - dist;
+            let dirX, dirZ;
+            if (dist < 0.001) {
+                const angle = Math.random() * Math.PI * 2;
+                dirX = Math.cos(angle);
+                dirZ = Math.sin(angle);
+            } else {
+                dirX = dx / dist;
+                dirZ = dz / dist;
+            }
+
+            const totalRadius = e1.radius + e2.radius;
+            const w1 = e2.radius / totalRadius;
+            const w2 = e1.radius / totalRadius;
+
+            e1.x -= dirX * overlap * w1;
+            e1.z -= dirZ * overlap * w1;
+            e2.x += dirX * overlap * w2;
+            e2.z += dirZ * overlap * w2;
+
+            if (isWallBlocking(e1.x, e1.z, e1.radius)) {
+                e1.x += dirX * overlap * w1;
+                e1.z += dirZ * overlap * w1;
+            }
+            if (isWallBlocking(e2.x, e2.z, e2.radius)) {
+                e2.x -= dirX * overlap * w2;
+                e2.z -= dirZ * overlap * w2;
+            }
+        }
+    }
+
     if (livingEnemies === 0) {
         let status = hordeManager.checkProgress(0);
         if (status === "NEXT_HORDE") {
