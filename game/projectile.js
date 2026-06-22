@@ -1,22 +1,23 @@
 // game/projectile.js
 class Projectile {
-    constructor(x, y, z, dirX, dirY, dirZ, speed) { // <-- dirY adicionado aqui
+    // Adicionamos o 'damage' no construtor
+    constructor(x, y, z, dirX, dirY, dirZ, speed, damage) { 
         this.x = x;
         this.y = y;
         this.z = z;
         this.dirX = dirX;
-        this.dirY = dirY; // <-- Nova variável
+        this.dirY = dirY; 
         this.dirZ = dirZ;
         this.speed = speed;
         this.active = true;
-        this.damage = 50;
+        this.damage = damage; // Agora o dano vem da arma!
         this.lifeTime = 100; 
     }
 
     update() {
         if (!this.active) return;
         this.x += this.dirX * this.speed;
-        this.y += this.dirY * this.speed; // <-- Agora ele voa no eixo Y
+        this.y += this.dirY * this.speed; 
         this.z += this.dirZ * this.speed;
         
         this.lifeTime--;

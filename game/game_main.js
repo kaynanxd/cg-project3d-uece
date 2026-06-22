@@ -14,7 +14,9 @@ let player, hordeManager;
 let enemies = [];
 let projectiles = [];
 let bobbingTimer = 0;
-
+let weaponMeshes = {}; // Dicionário para guardar as 3 armas
+let isMouseDown = false;
+let mouseJustPressed = false;
 let gl, program, programInfo, camera, input;
 
 // Meshes
@@ -141,7 +143,12 @@ async function initGame() {
         enemyMesh = await OBJLoader.load(gl, "assets/inimigo.obj");
         bossMesh = await OBJLoader.load(gl, "assets/boss.obj");
         projectileMesh = await OBJLoader.load(gl, "assets/esfera.obj"); 
-        weaponMesh = await OBJLoader.load(gl, "assets/arma.obj");
+        
+        // NOVO: Carregando todas as armas
+        weaponMeshes['pistola'] = await OBJLoader.load(gl, "assets/armapistola.obj");
+        weaponMeshes['akm'] = await OBJLoader.load(gl, "assets/arma.obj");
+        weaponMeshes['escopeta'] = await OBJLoader.load(gl, "assets/armaescopeta.obj");
+        
         wallMesh = await OBJLoader.load(gl, "assets/cubo.obj"); 
     } catch (e) {
         console.error("Erro crítico ao carregar os arquivos .obj em assets/!", e);
@@ -161,21 +168,28 @@ async function initGame() {
     if(texFloor) floorMesh.setTexture(texFloor);
 
     // Escuta o clique do mouse para atirar
+// Escuta o clique do mouse para atirar
     canvas.addEventListener('mousedown', (e) => {
-        // Só atira se o estado for estritamente PLAYING
         if (currentState === GameState.PLAYING && document.pointerLockElement === canvas && e.button === 0) {
-            let proj = player.shoot(camera.position.x, camera.position.y, camera.position.z, camera.yaw, camera.pitch);
-            if (proj) projectiles.push(proj);
+            isMouseDown = true;
+            mouseJustPressed = true;
         }
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+        if (e.button === 0) isMouseDown = false;
     });
 
     window.addEventListener('keydown', (e) => {
         if (e.key === "Escape") {
-            if (currentState === GameState.PLAYING) {
-                pauseGame();
-            } else if (currentState === GameState.PAUSED) {
-                resumeGame();
-            }
+            if (currentState === GameState.PLAYING) pauseGame();
+            else if (currentState === GameState.PAUSED) resumeGame();
+        }
+        // NOVO: Troca de armas
+        if (currentState === GameState.PLAYING && player) {
+            if (e.key === '1') player.switchWeapon(0); // Pistola
+            if (e.key === '2') player.switchWeapon(1); // AKM
+            if (e.key === '3') player.switchWeapon(2); // Escopeta
         }
     });
 
@@ -228,6 +242,22 @@ function gameLoop() {
 }
 
 function updatePlaying() {
+    let currentWeapon = player.weapons[player.currentWeaponIndex];
+    let shouldShoot = false;
+
+    if (currentWeapon.isAuto) {
+        shouldShoot = isMouseDown; // Atira enquanto segura
+    } else {
+        shouldShoot = mouseJustPressed; // Atira só no clique inicial
+    }
+
+    if (shouldShoot) {
+        let projs = player.shoot(camera.position.x, camera.position.y, camera.position.z, camera.yaw, camera.pitch);
+        if (projs && projs.length > 0) {
+            projectiles.push(...projs); // Adiciona todos os tiros no array principal
+        }
+    }
+    mouseJustPressed = false; // Reseta o "click único" para o próximo frame
 
     let isMovingInput = input.isPressed('w') || input.isPressed('s') || input.isPressed('a') || input.isPressed('d');
 
@@ -494,32 +524,27 @@ function renderPlaying() {
     gl.disable(gl.BLEND);
     gl.depthMask(true);
 
-    // 5. DESENHA A ARMA HUD
-    if (weaponMesh) {
+// 5. DESENHA A ARMA HUD
+    let currentWeaponObj = player.weapons[player.currentWeaponIndex];
+    let activeWeaponMesh = weaponMeshes[currentWeaponObj.id];
+
+    if (activeWeaponMesh) {
         gl.clear(gl.DEPTH_BUFFER_BIT);
         gl.uniformMatrix4fv(programInfo.uniforms.u_view, false, Matrix4.identity());
         
-        // ==========================================================
-        // NOVO: CONFIGURAÇÃO DE LUZ EXCLUSIVA PARA A ARMA
-        // ==========================================================
-        // Coloca a luz para trás (Z = 2.0) e um pouco para cima (Y = 1.0) para bater no metal
         gl.uniform3f(programInfo.uniforms.u_lightPosition, 0.0, 1.0, 2.0);
         gl.uniform3f(programInfo.uniforms.u_viewPosition, 0.0, 0.0, 2.0);
-        
-        // Força a direção da lanterna para o fundo da tela (-Z) apenas para o HUD
         gl.uniform3f(programInfo.uniforms.u_lightDirection, 0.0, 0.0, -1.0);
         
-        // Cone super aberto apenas para a arma não ficar no escuro
         gl.uniform1f(programInfo.uniforms.u_lightCutOff, Math.cos(45.0 * Math.PI / 180));
         gl.uniform1f(programInfo.uniforms.u_lightOuterCutOff, Math.cos(60.0 * Math.PI / 180));
-
         gl.uniform1i(programInfo.uniforms.u_numProjLights, 0); 
-        
         gl.uniform1i(programInfo.uniforms.u_useTexture, 0); 
         gl.uniform4f(programInfo.uniforms.u_color, 1.0, 1.0, 1.0, 1.0); 
         
-        let recoilOffsetZ = (player.shootCooldown / 15.0) * 0.25; 
-        let recoilOffsetY = (player.shootCooldown / 15.0) * 0.04;
+        // Calcula o recuo visual baseando-se no cooldown máximo da arma atual
+        let recoilOffsetZ = (player.shootCooldown / currentWeaponObj.cooldown) * 0.25; 
+        let recoilOffsetY = (player.shootCooldown / currentWeaponObj.cooldown) * 0.04;
 
         let bobX = 0;
         let bobY = 0;
@@ -538,9 +563,9 @@ function renderPlaying() {
         let tMat = Matrix4.translation(0.45 + bobX, -0.55 + recoilOffsetY + bobY, -1.2 + recoilOffsetZ);
         m = Matrix4.multiply(tMat, m);
 
-        weaponMesh.modelMatrix = m;
-        aplicarLuzDinamica(); // Garante a luz na arma
-        weaponMesh.draw(programInfo);
+        activeWeaponMesh.modelMatrix = m;
+        aplicarLuzDinamica(); 
+        activeWeaponMesh.draw(programInfo);
     }
 }
 

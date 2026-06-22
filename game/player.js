@@ -1,3 +1,4 @@
+// game/player.js
 class Player {
     constructor() {
         this.maxHp = 100;
@@ -5,18 +6,35 @@ class Player {
         this.shootCooldown = 0;
         this.damageAudioCooldown = 0;
 
-        // NOVO: Atributos de Stamina
         this.maxStamina = 100;
         this.stamina = this.maxStamina;
-        this.staminaCooldown = 0; // Cooldown quando zera
-        this.isExhausted = false; // Bloqueia corrida enquanto recupera do zero
+        this.staminaCooldown = 0; 
+        this.isExhausted = false; 
         this.muzzleFlashFrames = 0;
-        // Configurações de velocidade de movimentação
+        
         this.walkSpeed = 0.08;
-        this.runSpeed = 0.15; // Velocidade ao correr
+        this.runSpeed = 0.15; 
         this.currentSpeed = this.walkSpeed;
 
+        // ==========================================
+        // NOVO: SISTEMA DE ARMAS
+        // ==========================================
+        this.weapons = [
+            { id: 'pistola',  cooldown: 40, damage: 50, pellets: 1, spread: 0.0,  isAuto: false }, // 1: Pistola
+            { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true  }, // 2: Metralhadora
+            { id: 'escopeta', cooldown: 60, damage: 15, pellets: 8, spread: 0.15, isAuto: false }  // 3: Escopeta
+        ];
+        this.currentWeaponIndex = 0; // Começa com a pistola
+
         updateHUD(this.hp, this.stamina);
+    }
+
+    // Função para trocar de arma
+    switchWeapon(index) {
+        if (index >= 0 && index < this.weapons.length && this.currentWeaponIndex !== index) {
+            this.currentWeaponIndex = index;
+            this.shootCooldown = 20; // Animação/delayzinho ao trocar de arma
+        }
     }
 
     takeDamage(amount) {
@@ -37,9 +55,11 @@ class Player {
     }
 
     shoot(cameraX, cameraY, cameraZ, yaw, pitch) {
-        if (!this.canShoot()) return null;
-        this.shootCooldown = 15; 
-        this.muzzleFlashFrames = 4
+        if (!this.canShoot()) return []; // Agora retorna um array vazio
+
+        let weapon = this.weapons[this.currentWeaponIndex];
+        this.shootCooldown = weapon.cooldown; 
+        this.muzzleFlashFrames = 4;
         AudioManager.play("gunshot", 0.4);
 
         let cosPitch = Math.cos(pitch);
@@ -70,49 +90,66 @@ class Player {
         let trajX = targetX - spawnX;
         let trajY = targetY - spawnY;
         let trajZ = targetZ - spawnZ;
-
         let length = Math.sqrt(trajX*trajX + trajY*trajY + trajZ*trajZ);
+
+        let spawnedProjectiles = [];
+
+        // Loop para gerar as balas (1 para pistola/AKM, várias para escopeta)
+        for (let i = 0; i < weapon.pellets; i++) {
+            // Aplica o "Spread" (espalhamento) randômico
+            let spreadX = (Math.random() - 0.5) * weapon.spread;
+            let spreadY = (Math.random() - 0.5) * weapon.spread;
+            let spreadZ = (Math.random() - 0.5) * weapon.spread;
+
+            let finalDirX = (trajX / length) + spreadX;
+            let finalDirY = (trajY / length) + spreadY;
+            let finalDirZ = (trajZ / length) + spreadZ;
+
+            // Normaliza o vetor novamente para a velocidade ser constante
+            let finalLength = Math.sqrt(finalDirX*finalDirX + finalDirY*finalDirY + finalDirZ*finalDirZ);
+            
+            spawnedProjectiles.push(new Projectile(
+                spawnX, spawnY, spawnZ, 
+                finalDirX / finalLength, finalDirY / finalLength, finalDirZ / finalLength, 
+                1.5, weapon.damage // Passando o dano configurado
+            ));
+        }
         
-        return new Projectile(spawnX, spawnY, spawnZ, trajX / length, trajY / length, trajZ / length, 1.5);
+        return spawnedProjectiles;
     }
 
-    // NOVO: Gerencia a mecânica de corrida e regeneração por frame
     update(inputHandler, isMoving) {
         if (this.shootCooldown > 0) this.shootCooldown--;
         if (this.damageAudioCooldown > 0) this.damageAudioCooldown--;
         if (this.muzzleFlashFrames > 0) this.muzzleFlashFrames--;
 
-        // Verifica se quer correr (Shift), está se movendo e não está exausto
         if (inputHandler.isPressed('shift') && isMoving && !this.isExhausted) {
             this.currentSpeed = this.runSpeed;
-            this.stamina -= 0.6; // Gasta stamina por frame de corrida (~36 por segundo)
+            this.stamina -= 0.6; 
 
             if (this.stamina <= 0) {
                 this.stamina = 0;
                 this.isExhausted = true;
-                this.staminaCooldown = 90; // 1.5 segundos de cooldown absoluto
+                this.staminaCooldown = 90; 
             }
         } else {
-            // Estado de caminhada ou parado
             this.currentSpeed = this.walkSpeed;
 
             if (this.staminaCooldown > 0) {
                 this.staminaCooldown--;
             } else {
-                // Se o cooldown acabou, regenera a stamina
                 if (this.stamina < this.maxStamina) {
-                    this.stamina += 0.4; // Taxa de regeneração por frame
-                    if (this.stamina >= 20) this.isExhausted = false; // Recuperou o fôlego mínimo
+                    this.stamina += 0.4; 
+                    if (this.stamina >= 20) this.isExhausted = false; 
                     if (this.stamina > this.maxStamina) this.stamina = this.maxStamina;
                 }
             }
         }
-
         updateHUD(this.hp, this.stamina);
     }
+    
 }
 
-// Atualizado para receber e exibir a stamina arredondada
 function updateHUD(hp, stamina) {
     document.getElementById('hud-hp').innerText = hp;
     document.getElementById('hud-stamina').innerText = Math.floor(stamina);
