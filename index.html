@@ -108,6 +108,10 @@
             pointer-events: auto; /* IMPORTANTE: Isso habilita o clique aqui */
             display: flex;
         }
+        .screen, #pause-screen {
+    pointer-events: auto;
+    display: flex;
+}
     </style>
 </head>
 <body>
@@ -142,10 +146,10 @@
 
         <div id="menu-screen" class="screen">
             <h1>WEBGL DOOM</h1>
-            <p>Selecione a Dificuldade</p>
-            <button class="btn" onclick="startGame('EASY')">Fácil</button>
-            <button class="btn" onclick="startGame('NORMAL')">Normal</button>
-            <button class="btn" onclick="startGame('HARD')">Difícil</button>
+            <p id="menu-status" style="color:#aaa;">Carregando assets...</p>
+            <button class="btn" onclick="startGame('EASY', event)" disabled>Fácil</button>
+            <button class="btn" onclick="startGame('NORMAL', event)" disabled>Normal</button>
+            <button class="btn" onclick="startGame('HARD', event)" disabled>Difícil</button>
         </div>
 
         <div id="pause-screen" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:10;">

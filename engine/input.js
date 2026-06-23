@@ -16,9 +16,15 @@ class InputHandler {
             this.keys[e.key.toLowerCase()] = false;
         });
 
-        // Solicita Pointer Lock ao clicar no canvas
+        // Solicita Pointer Lock ao clicar no canvas,
+        // mas SOMENTE se o jogo já estiver em andamento (não no menu).
         this.canvas.addEventListener('click', () => {
-            this.canvas.requestPointerLock();
+            // Só pede pointer lock se o jogo está ativo E o lock ainda não está ativo
+            if (typeof currentState !== 'undefined' &&
+                (currentState === GameState.PLAYING || currentState === GameState.PAUSED) &&
+                document.pointerLockElement !== this.canvas) {
+                this.canvas.requestPointerLock();
+            }
         });
 
         // Captura movimento do mouse acumulado por frame

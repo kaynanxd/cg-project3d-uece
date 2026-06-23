@@ -245,8 +245,12 @@ async function initGame() {
         }
     });
 
-    // Mostra o Menu HTML
+    // Mostra o Menu HTML só agora que tudo carregou
     document.getElementById("menu-screen").style.display = "flex";
+    document.getElementById("menu-status").textContent = "Selecione a Dificuldade";
+    // Habilita os botões (que ficaram disabled durante o carregamento)
+    document.querySelectorAll("#menu-screen .btn").forEach(b => b.disabled = false);
+
     requestAnimationFrame(gameLoop);
 }
 
@@ -262,31 +266,50 @@ function resumeGame() {
     document.getElementById("pause-screen").style.display = "none";
 }
 
-async function startGame(diffStr) {
+let gameStarting = false;
 
-    if (AudioManager.audioCtx.state === "suspended") {
-        await AudioManager.audioCtx.resume();
+async function startGame(diffStr, event) {
+    if (event) event.stopPropagation();
+    if (gameStarting) return;
+    gameStarting = true;
+
+    console.log("[startGame] Iniciando com dificuldade:", diffStr);
+
+    // Esconde o menu IMEDIATAMENTE, antes de qualquer await
+    document.getElementById("menu-screen").style.display = "none";
+    document.getElementById("crosshair").style.display = "block";
+    document.getElementById("hud").style.display = "block";
+    document.getElementById("hud-wave").style.display = "block";
+
+    console.log("[startGame] Menu escondido. Estado do áudio:", AudioManager?.audioCtx?.state);
+
+    try {
+        if (AudioManager.audioCtx.state === "suspended") {
+            await AudioManager.audioCtx.resume();
+        }
+        AudioManager.playMusic("music", 0.05);
+    } catch(e) {
+        console.warn("[startGame] Audio error:", e);
     }
 
-    AudioManager.playMusic("music", 0.05);
+    console.log("[startGame] Áudio ok. Criando player...");
 
     currentDifficulty = DifficultyConfig[diffStr];
     player = new Player();
     hordeManager = new HordeManager(currentDifficulty);
     projectiles = [];
 
-    document.getElementById("menu-screen").style.display = "none";
-    document.getElementById("crosshair").style.display = "block";
-    document.getElementById("hud").style.display = "block";
-    document.getElementById("hud-wave").style.display = "block";
+    console.log("[startGame] gunUpgradeWave:", currentDifficulty.gunUpgradeWave);
 
     if (currentDifficulty.gunUpgradeWave === 1) {
         showWeaponSelection();
     } else {
         enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
-        document.getElementById("glcanvas1").requestPointerLock();
         currentState = GameState.PLAYING;
     }
+
+    console.log("[startGame] Concluído. currentState:", currentState);
+    gameStarting = false;
 }
 
 function showUpgradeSelection() {
