@@ -314,6 +314,7 @@ const WEAPON_CHOICES = [
 function showWeaponSelection() {
     currentState = GameState.UPGRADING;
     document.exitPointerLock();
+    AudioManager.play("powerup");
 
     let container = document.getElementById('weapon-choices');
     container.innerHTML = '';
