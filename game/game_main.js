@@ -4,7 +4,7 @@ const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3 , PAUSED: 4, U
 let currentState = GameState.MENU;
 
 const DifficultyConfig = {
-    EASY:   { hordeCount: 3, gunUpgradeWave: 1, baseEnemies: 3,  enemySpeed: 0.06, enemyHp: 70,  bossHp: 600 ,bossSpeed: 0.08},
+    EASY:   { hordeCount: 3, gunUpgradeWave: 2, baseEnemies: 3,  enemySpeed: 0.06, enemyHp: 70,  bossHp: 600 ,bossSpeed: 0.08},
     NORMAL: { hordeCount: 5, gunUpgradeWave: 2, baseEnemies: 6,  enemySpeed: 0.08, enemyHp: 100, bossHp: 1000 ,bossSpeed: 0.10},
     HARD:   { hordeCount: 7, gunUpgradeWave: 3, baseEnemies: 10, enemySpeed: 0.10, enemyHp: 150, bossHp: 1500 , bossSpeed: 0.10}
 };
@@ -18,7 +18,9 @@ let weaponMeshes = {}; // Dicionário para guardar as 3 armas
 let isMouseDown = false;
 let mouseJustPressed = false;
 let gl, program, programInfo, camera, input;
-
+let lastFrameTime = 0;
+const FPS_LIMIT = 60;
+const FRAME_DURATION = 1000 / FPS_LIMIT; // ~16.67 milissegundos por frame
 // Meshes
 let enemyMesh, bossMesh, projectileMesh, floorMesh, wallMesh, weaponMesh;
 
@@ -357,13 +359,29 @@ function selectWeapon(weaponId) {
     document.getElementById('glcanvas1').requestPointerLock();
 }
 
-function gameLoop() {
-    if (currentState === GameState.PLAYING) {
-        updatePlaying();
-        renderPlaying();
-    } else if (currentState === GameState.UPGRADING) {
-        renderPlaying();
+function gameLoop(timestamp) {
+    // Se for o primeiro frame, define o tempo inicial
+    if (!lastFrameTime) {
+        lastFrameTime = timestamp;
     }
+
+    // Calcula quantos milissegundos se passaram desde o último frame drawn
+    let elapsed = timestamp - lastFrameTime;
+
+    // Se passou tempo suficiente (ex: 16.67ms para 60 FPS), atualiza e desenha
+    if (elapsed >= FRAME_DURATION) {
+        // Ajusta o lastFrameTime tirando o excesso acumulado para manter o timing preciso
+        lastFrameTime = timestamp - (elapsed % FRAME_DURATION);
+
+        if (currentState === GameState.PLAYING) {
+            updatePlaying();
+            renderPlaying();
+        } else if (currentState === GameState.UPGRADING) {
+            renderPlaying();
+        }
+    }
+
+    // Continua chamando o loop na velocidade nativa do monitor, mas só processamos a 60
     requestAnimationFrame(gameLoop);
 }
 
