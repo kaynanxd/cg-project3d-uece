@@ -1,22 +1,22 @@
 const POWERUP_TYPES = [
     {
         id: 'maxHp',
-        name: '+50 Vida Máxima',
+        name: '+30 Vida Máxima',
         desc: 'Aumenta a vida em 50',
         color: '#ff3333',
         apply: (player) => {
-            player.maxHp += 50;
+            player.maxHp += 30;
             player.hp = Math.min(player.hp + 50, player.maxHp);
         }
     },
     {
         id: 'maxStamina',
-        name: '+25 Max Stamina',
+        name: '+30 Max Stamina',
         desc: 'Aumenta a stamina máxima em 25',
         color: '#33ff33',
         apply: (player) => {
-            player.maxStamina += 25;
-            player.stamina = Math.min(player.stamina + 25, player.maxStamina);
+            player.maxStamina += 30;
+            player.stamina = Math.min(player.stamina + 50, player.maxStamina);
         }
     },
     {
