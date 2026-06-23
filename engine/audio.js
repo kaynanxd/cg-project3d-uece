@@ -8,13 +8,11 @@ const AudioManager = {
         this.buffers[name] = await this.audioCtx.decodeAudioData(arrayBuffer);
     },
 
-    play(name, volume = 0.5) {
-
+    play(name, volume = 1) {
         if (!this.buffers[name]) {
             console.warn(`Som '${name}' não carregado`);
             return;
         }
-
         const source = this.audioCtx.createBufferSource();
         source.buffer = this.buffers[name];
 
@@ -23,16 +21,12 @@ const AudioManager = {
 
         source.connect(gainNode);
         gainNode.connect(this.audioCtx.destination);
-
         source.start(0);
     },
 
     playMusic(name, volume = 0.3) {
         if (!this.buffers[name]) return;
-
-        if (this.musicSource) {
-            this.musicSource.stop();
-        }
+        if (this.musicSource) this.musicSource.stop();
 
         const source = this.audioCtx.createBufferSource();
         source.buffer = this.buffers[name];
@@ -43,9 +37,15 @@ const AudioManager = {
 
         source.connect(gainNode);
         gainNode.connect(this.audioCtx.destination);
-
         source.start(0);
 
         this.musicSource = source;
+    },
+
+    stopMusic() {
+        if (this.musicSource) {
+            this.musicSource.stop();
+            this.musicSource = null;
+        }
     }
 };

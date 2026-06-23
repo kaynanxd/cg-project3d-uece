@@ -95,6 +95,9 @@ async function initGame() {
         await AudioManager.load("enemy_hit",  "assets/audio/inimigo_dano.mp3");
         await AudioManager.load("enemy_growl","assets/audio/grunhido.mp3");
         await AudioManager.load("enemy_death","assets/audio/enemy_death.mp3");
+        await AudioManager.load("powerup",    "assets/audio/powerup.mp3");
+        await AudioManager.load("vitoria",    "assets/audio/vitoria.mp3");
+        await AudioManager.load("derrota",    "assets/audio/derrota.mp3");
     } catch (e) {
         console.warn("Erro ao carregar sons:", e);
     }
@@ -254,7 +257,7 @@ async function startGame(diffStr, event) {
 
     try {
         if (AudioManager.audioCtx.state === "suspended") await AudioManager.audioCtx.resume();
-        AudioManager.playMusic("music", 0.05);
+        AudioManager.playMusic("music", 0.04);
     } catch (e) {
         console.warn("Erro de áudio:", e);
     }
@@ -277,6 +280,7 @@ async function startGame(diffStr, event) {
 function showUpgradeSelection() {
     currentState = GameState.UPGRADING;
     document.exitPointerLock();
+    AudioManager.play("powerup");
 
     let choices = [...POWERUP_TYPES].sort(() => Math.random() - 0.5).slice(0, 3);
     let container = document.getElementById('upgrade-choices');
@@ -394,6 +398,8 @@ function updatePlaying() {
     if (player.hp <= 0) {
         currentState = GameState.GAME_OVER;
         document.exitPointerLock();
+        if (AudioManager.musicSource) { AudioManager.musicSource.stop(); AudioManager.musicSource = null; }
+        AudioManager.play("derrota");
         document.getElementById("game-over-screen").style.display = "flex";
         document.getElementById("crosshair").style.display = "none";
         return;
@@ -481,6 +487,8 @@ function updatePlaying() {
         } else if (status === "VICTORY") {
             currentState = GameState.VICTORY;
             document.exitPointerLock();
+            if (AudioManager.musicSource) { AudioManager.musicSource.stop(); AudioManager.musicSource = null; }
+            AudioManager.play("vitoria");
             document.getElementById("victory-screen").style.display = "flex";
             document.getElementById("crosshair").style.display = "none";
         }
