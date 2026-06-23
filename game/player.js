@@ -1,7 +1,7 @@
 const WEAPON_DEFS = [
     { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_pistola"},
     { id: 'akm',      cooldown: 8,  damage: 25, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_akm" },
-    { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.15, isAuto: false,recoilZ: 0.75, recoilY: 0.15, sound: "sound_escopeta" }
+    { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.20, isAuto: false,recoilZ: 0.75, recoilY: 0.15, sound: "sound_escopeta" }
 ];
 
 class Player {
