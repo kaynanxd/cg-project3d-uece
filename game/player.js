@@ -1,6 +1,6 @@
 // game/player.js
 const WEAPON_DEFS = [
-    { id: 'pistola',  cooldown: 40, damage: 50, pellets: 1, spread: 0.0,  isAuto: false },
+    { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false },
     { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true  },
     { id: 'escopeta', cooldown: 60, damage: 15, pellets: 8, spread: 0.15, isAuto: false }
 ];
@@ -212,7 +212,7 @@ function updateHUD(player) {
     document.getElementById('hud-stamina').innerText = Math.floor(player.stamina);
     document.getElementById('hud-maxstamina').innerText = player.maxStamina;
     let weapon = player.weapons[player.currentWeaponIndex];
-    document.getElementById('hud-damage').innerText = Math.floor(weapon.damage * (1 + player.damageMultiplier * 0.1));
+    document.getElementById('hud-damage').innerText = Math.floor(weapon.damage * (1 + player.damageMultiplier * 0.2));
     document.getElementById('hud-lives').innerText = player.extraLives;
     document.getElementById('hud-piercing').innerText = player.piercingLevel;
 }
