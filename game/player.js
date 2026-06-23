@@ -1,6 +1,6 @@
 const WEAPON_DEFS = [
     { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_pistola"},
-    { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_akm" },
+    { id: 'akm',      cooldown: 8,  damage: 25, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_akm" },
     { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.15, isAuto: false,recoilZ: 0.75, recoilY: 0.15, sound: "sound_escopeta" }
 ];
 
@@ -49,6 +49,17 @@ class Player {
             this.currentWeaponIndex = index;
             this.shootCooldown = 20;
         }
+    }
+
+    addWeaponToInventory(weaponId) {
+        const template = WEAPON_DEFS.find(w => w.id === weaponId);
+        if (!template) return;
+
+        if (!this.weapons.some(w => w.id === weaponId)) {
+            this.weapons.push(Object.assign({}, template));
+            this.currentWeaponIndex = this.weapons.length - 1;
+        }
+        this.shootCooldown = 20;
     }
 
     takeDamage(amount) {

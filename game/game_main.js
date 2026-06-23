@@ -2,9 +2,9 @@ const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3, PAUSED: 4, UP
 let currentState = GameState.MENU;
 
 const DifficultyConfig = {
-    EASY:   { hordeCount: 3, gunUpgradeWave: 2, baseEnemies: 4,  enemySpeed: 0.08, enemyHp: 60,  bossHp: 1200,  bossSpeed: 0.10 },
-    NORMAL: { hordeCount: 5, gunUpgradeWave: 2, baseEnemies: 6,  enemySpeed: 0.10, enemyHp: 80,  bossHp: 2000, bossSpeed: 0.12 },
-    HARD:   { hordeCount: 7, gunUpgradeWave: 2, baseEnemies: 8, enemySpeed: 0.12, enemyHp: 100, bossHp: 3000, bossSpeed: 0.14 }
+    EASY:   { hordeCount: 4, gunUpgradeWave: [2, 4], baseEnemies: 4,  enemySpeed: 0.08, enemyHp: 60,  bossHp: 1200,  bossSpeed: 0.10 },
+    NORMAL: { hordeCount: 5, gunUpgradeWave: [2, 4], baseEnemies: 5,  enemySpeed: 0.10, enemyHp: 80,  bossHp: 2000, bossSpeed: 0.12 },
+    HARD:   { hordeCount: 7, gunUpgradeWave: [2, 4], baseEnemies: 6, enemySpeed: 0.12, enemyHp: 100, bossHp: 2800, bossSpeed: 0.14 }
 };
 
 let currentDifficulty;
@@ -294,6 +294,17 @@ function endCutscene() {
     video.pause();
     container.style.display = "none";
     
+    if (input) {
+        if (typeof input.reset === 'function') {
+            input.reset();
+        } else if (input.keys) {
+            input.keys = {}; 
+        }
+
+        input.mouseDeltaX = 0;
+        input.mouseDeltaY = 0;
+    }
+    
     runActualGame(savedDifficulty);
 }
 
@@ -387,7 +398,16 @@ function showWeaponSelection() {
     container.style.pointerEvents = "none";
     setTimeout(() => { container.style.pointerEvents = "auto"; }, 200);
 
-    for (let w of WEAPON_CHOICES) {
+    const avaliableChoices = WEAPON_CHOICES.filter(choice => 
+        !player.weapons.some(w => w.id === choice.id)
+    );
+
+    if (avaliableChoices.length === 0) {
+        showUpgradeSelection();
+        return;
+    }
+
+    for (let w of avaliableChoices) {
         let card = document.createElement('div');
         card.className = 'upgrade-card';
         card.dataset.id = w.id;
@@ -399,9 +419,7 @@ function showWeaponSelection() {
 }
 
 function selectWeapon(weaponId) {
-    const index = WEAPON_CHOICES.findIndex(w => w.id === weaponId);
-    if (index === -1) return;
-    player.setPermanentWeapon(index);
+    player.addWeaponToInventory(weaponId);
     updateHUD(player);
     document.getElementById('weapon-screen').style.display = 'none';
     
@@ -548,10 +566,13 @@ function updatePlaying() {
 
     if (livingEnemies === 0) {
         const status = hordeManager.checkProgress(0);
-        if (status === "NEXT_HORDE") {
-            if (hordeManager.currentHorde === currentDifficulty.gunUpgradeWave) showWeaponSelection();
-            else showUpgradeSelection();
-        } else if (status === "VICTORY") {
+    if (status === "NEXT_HORDE") {
+        if (currentDifficulty.gunUpgradeWave.includes(hordeManager.currentHorde)) {
+            showWeaponSelection();
+        } else {
+            showUpgradeSelection();
+        }
+    } else if (status === "VICTORY") {
             currentState = GameState.VICTORY;
             document.exitPointerLock();
             if (AudioManager.musicSource) { AudioManager.musicSource.stop(); AudioManager.musicSource = null; }

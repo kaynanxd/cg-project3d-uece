@@ -47,5 +47,10 @@ const AudioManager = {
             this.musicSource.stop();
             this.musicSource = null;
         }
+    },
+    reset() {
+        this.keys = {};
+        this.mouseDeltaX = 0;
+        this.mouseDeltaY = 0;
     }
 };
