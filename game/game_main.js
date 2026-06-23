@@ -4,9 +4,9 @@ const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3 , PAUSED: 4, U
 let currentState = GameState.MENU;
 
 const DifficultyConfig = {
-    EASY:   { hordeCount: 3, baseEnemies: 3,  enemySpeed: 0.06, enemyHp: 70,  bossHp: 600 ,bossSpeed: 0.08},
-    NORMAL: { hordeCount: 5, baseEnemies: 6,  enemySpeed: 0.08, enemyHp: 100, bossHp: 1000 ,bossSpeed: 0.10},
-    HARD:   { hordeCount: 7, baseEnemies: 10, enemySpeed: 0.10, enemyHp: 150, bossHp: 1500 , bossSpeed: 0.10}
+    EASY:   { hordeCount: 3, gunUpgradeWave: 1, baseEnemies: 3,  enemySpeed: 0.06, enemyHp: 70,  bossHp: 600 ,bossSpeed: 0.08},
+    NORMAL: { hordeCount: 5, gunUpgradeWave: 2, baseEnemies: 6,  enemySpeed: 0.08, enemyHp: 100, bossHp: 1000 ,bossSpeed: 0.10},
+    HARD:   { hordeCount: 7, gunUpgradeWave: 3, baseEnemies: 10, enemySpeed: 0.10, enemyHp: 150, bossHp: 1500 , bossSpeed: 0.10}
 };
 
 let currentDifficulty;
@@ -193,6 +193,13 @@ async function initGame() {
         selectUpgrade(type);
     });
 
+    document.getElementById('weapon-choices').addEventListener('click', (e) => {
+        let card = e.target.closest('.upgrade-card');
+        if (!card) return;
+        let weaponId = card.dataset.id;
+        selectWeapon(weaponId);
+    });
+
     canvas.addEventListener('mouseup', (e) => {
         if (e.button === 0) isMouseDown = false;
     });
@@ -238,16 +245,20 @@ async function startGame(diffStr) {
     currentDifficulty = DifficultyConfig[diffStr];
     player = new Player();
     hordeManager = new HordeManager(currentDifficulty);
-    enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
     projectiles = [];
 
     document.getElementById("menu-screen").style.display = "none";
     document.getElementById("crosshair").style.display = "block";
     document.getElementById("hud").style.display = "block";
     document.getElementById("hud-wave").style.display = "block";
-    document.getElementById("glcanvas1").requestPointerLock();
 
-    currentState = GameState.PLAYING;
+    if (currentDifficulty.gunUpgradeWave === 1) {
+        showWeaponSelection();
+    } else {
+        enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
+        document.getElementById("glcanvas1").requestPointerLock();
+        currentState = GameState.PLAYING;
+    }
 }
 
 function showUpgradeSelection() {
@@ -275,6 +286,44 @@ function selectUpgrade(type) {
     updateHUD(player);
 
     document.getElementById('upgrade-screen').style.display = 'none';
+
+    enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
+
+    currentState = GameState.PLAYING;
+    document.getElementById('glcanvas1').requestPointerLock();
+}
+
+const WEAPON_CHOICES = [
+    { id: 'pistola',  name: 'Pistola',  desc: 'Dano: 50 | Cadência: Média' },
+    { id: 'akm',      name: 'AKM',      desc: 'Dano: 20 | Cadência: Alta | Automático' },
+    { id: 'escopeta', name: 'Escopeta', desc: 'Dano: 15x8 | Cadência: Baixa | Dispersão' }
+];
+
+function showWeaponSelection() {
+    currentState = GameState.UPGRADING;
+    document.exitPointerLock();
+
+    let container = document.getElementById('weapon-choices');
+    container.innerHTML = '';
+    for (let w of WEAPON_CHOICES) {
+        let card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.dataset.id = w.id;
+        card.innerHTML = '<div class="upgrade-name">' + w.name + '</div><div class="upgrade-desc">' + w.desc + '</div>';
+        container.appendChild(card);
+    }
+
+    document.getElementById('weapon-screen').style.display = 'flex';
+}
+
+function selectWeapon(weaponId) {
+    const index = WEAPON_CHOICES.findIndex(w => w.id === weaponId);
+    if (index === -1) return;
+
+    player.setPermanentWeapon(index);
+    updateHUD(player);
+
+    document.getElementById('weapon-screen').style.display = 'none';
 
     enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
 
@@ -443,7 +492,11 @@ function updatePlaying() {
     if (livingEnemies === 0) {
         let status = hordeManager.checkProgress(0);
         if (status === "NEXT_HORDE") {
-            showUpgradeSelection();
+            if (hordeManager.currentHorde === currentDifficulty.gunUpgradeWave) {
+                showWeaponSelection();
+            } else {
+                showUpgradeSelection();
+            }
         } else if (status === "VICTORY") {
             currentState = GameState.VICTORY;
             document.exitPointerLock();

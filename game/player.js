@@ -1,4 +1,10 @@
 // game/player.js
+const WEAPON_DEFS = [
+    { id: 'pistola',  cooldown: 40, damage: 50, pellets: 1, spread: 0.0,  isAuto: false },
+    { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true  },
+    { id: 'escopeta', cooldown: 60, damage: 15, pellets: 8, spread: 0.15, isAuto: false }
+];
+
 class Player {
     constructor() {
         this.maxHp = 100;
@@ -17,21 +23,23 @@ class Player {
         this.currentSpeed = this.walkSpeed;
 
         // ==========================================
-        // NOVO: SISTEMA DE ARMAS
+        // SISTEMA DE ARMAS — começa só com pistola
         // ==========================================
-        this.weapons = [
-            { id: 'pistola',  cooldown: 40, damage: 50, pellets: 1, spread: 0.0,  isAuto: false }, // 1: Pistola
-            { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true  }, // 2: Metralhadora
-            { id: 'escopeta', cooldown: 60, damage: 15, pellets: 8, spread: 0.15, isAuto: false }  // 3: Escopeta
-        ];
-        this.currentWeaponIndex = 0; // Começa com a pistola
+        this.weapons = [Object.assign({}, WEAPON_DEFS[0])];
+        this.currentWeaponIndex = 0;
 
         // Power-up attributes
-        this.damage = 50;
+        this.damageMultiplier = 0;
         this.extraLives = 0;
         this.piercingLevel = 0;
 
         updateHUD(this);
+    }
+
+    setPermanentWeapon(index) {
+        this.weapons = [Object.assign({}, WEAPON_DEFS[index])];
+        this.currentWeaponIndex = 0;
+        this.shootCooldown = 20;
     }
 
     // Função para trocar de arma
@@ -118,11 +126,13 @@ class Player {
 
             // Normaliza o vetor novamente para a velocidade ser constante
             let finalLength = Math.sqrt(finalDirX*finalDirX + finalDirY*finalDirY + finalDirZ*finalDirZ);
-            
+
+            let gunDamage = Math.floor(weapon.damage * (1 + this.d))
+            let effectiveDamage = Math.floor(weapon.damage * (1 + this.damageMultiplier * 0.1));
             spawnedProjectiles.push(new Projectile(
                 spawnX, spawnY, spawnZ, 
                 finalDirX / finalLength, finalDirY / finalLength, finalDirZ / finalLength, 
-                1.5, weapon.damage // Passando o dano configurado
+                1.5, effectiveDamage, this.piercingLevel
             ));
         }
         
@@ -167,7 +177,8 @@ function updateHUD(player) {
     document.getElementById('hud-maxhp').innerText = player.maxHp;
     document.getElementById('hud-stamina').innerText = Math.floor(player.stamina);
     document.getElementById('hud-maxstamina').innerText = player.maxStamina;
-    document.getElementById('hud-damage').innerText = player.damage;
+    let weapon = player.weapons[player.currentWeaponIndex];
+    document.getElementById('hud-damage').innerText = Math.floor(weapon.damage * (1 + player.damageMultiplier * 0.1));
     document.getElementById('hud-lives').innerText = player.extraLives;
     document.getElementById('hud-piercing').innerText = player.piercingLevel;
 }

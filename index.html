@@ -71,6 +71,19 @@
         .upgrade-card .upgrade-desc {
             font-size: 0.9rem; color: #aaa;
         }
+        #weapon-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: none; flex-direction: column;
+            justify-content: center; align-items: center; pointer-events: auto; z-index: 50;
+        }
+        #weapon-screen h2 {
+            font-size: 3rem; color: #ff4444; margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+        }
+        #weapon-choices {
+            display: flex; gap: 30px; flex-wrap: wrap; justify-content: center;
+        }
+
         /* Isso garante que o canvas fique atrás de tudo */
         #glcanvas1 {
             position: absolute;
@@ -119,6 +132,12 @@
         <div id="upgrade-screen">
             <h2>ESCOLHA UM UPGRADE</h2>
             <div id="upgrade-choices"></div>
+        </div>
+
+        <div id="weapon-screen">
+            <h2>ESCOLHA SUA ARMA</h2>
+            <p style="color:#aaa; margin-bottom:20px;">Você ficará com esta arma permanentemente!</p>
+            <div id="weapon-choices"></div>
         </div>
 
         <div id="menu-screen" class="screen">
