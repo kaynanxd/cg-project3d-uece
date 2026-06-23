@@ -406,7 +406,7 @@ function updatePlaying() {
     let isMovingInput = input.isPressed('w') || input.isPressed('s') || input.isPressed('a') || input.isPressed('d');
 
     // 2. Atualiza o player enviando o estado das teclas, processando a stamina e definindo a velocidade
-    player.update(input, isMovingInput);
+    player.update(input, isMovingInput , camera.position);
 
     // 3. Atualiza a câmera injetando a velocidade resultante do player
     const oldCamX = camera.position.x;
@@ -424,12 +424,12 @@ function updatePlaying() {
         camera.position.z = newCamZ;
     }
 
-    if (isMovingInput) {
-        // Se estiver correndo (velocidade maior), o balanço é mais rápido
+    
+
+    if (isMovingInput && player.isGrounded) { // Modificado aqui: só balança se estiver no chão
         let bobSpeed = player.currentSpeed > 0.1 ? 0.25 : 0.15;
         bobbingTimer += bobSpeed;
     } else {
-        // Se parar de andar, a arma volta suavemente para a posição inicial (0)
         bobbingTimer %= Math.PI * 2;
         if (bobbingTimer > 0) {
             bobbingTimer -= 0.1;

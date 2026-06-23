@@ -5,6 +5,7 @@ const WEAPON_DEFS = [
     { id: 'escopeta', cooldown: 60, damage: 15, pellets: 8, spread: 0.15, isAuto: false }
 ];
 
+// game/player.js
 class Player {
     constructor() {
         this.maxHp = 100;
@@ -23,12 +24,18 @@ class Player {
         this.currentSpeed = this.walkSpeed;
 
         // ==========================================
-        // SISTEMA DE ARMAS — começa só com pistola
+        // NOVO: ATRIBUTOS DE FÍSICA DO PULO
         // ==========================================
+        this.velocityV = 0.0;        // Velocidade vertical (Eixo Y)
+        this.isGrounded = true;     // Flag para saber se está pisando no chão
+        this.jumpCost = 20.0;        // Custo de stamina para pular
+        this.jumpForce = 0.22;       // Impulso inicial do pulo
+        this.gravity = 0.012;        // Força da gravidade aplicada por frame
+        this.defaultHeight = 1.5;    // Altura dos olhos do player no chão
+
         this.weapons = [Object.assign({}, WEAPON_DEFS[0])];
         this.currentWeaponIndex = 0;
 
-        // Power-up attributes
         this.damageMultiplier = 0;
         this.extraLives = 0;
         this.piercingLevel = 0;
@@ -42,11 +49,10 @@ class Player {
         this.shootCooldown = 20;
     }
 
-    // Função para trocar de arma
     switchWeapon(index) {
         if (index >= 0 && index < this.weapons.length && this.currentWeaponIndex !== index) {
             this.currentWeaponIndex = index;
-            this.shootCooldown = 20; // Animação/delayzinho ao trocar de arma
+            this.shootCooldown = 20;
         }
     }
 
@@ -74,7 +80,7 @@ class Player {
     }
 
     shoot(cameraX, cameraY, cameraZ, yaw, pitch) {
-        if (!this.canShoot()) return []; // Agora retorna um array vazio
+        if (!this.canShoot()) return []; 
 
         let weapon = this.weapons[this.currentWeaponIndex];
         this.shootCooldown = weapon.cooldown; 
@@ -113,9 +119,7 @@ class Player {
 
         let spawnedProjectiles = [];
 
-        // Loop para gerar as balas (1 para pistola/AKM, várias para escopeta)
         for (let i = 0; i < weapon.pellets; i++) {
-            // Aplica o "Spread" (espalhamento) randômico
             let spreadX = (Math.random() - 0.5) * weapon.spread;
             let spreadY = (Math.random() - 0.5) * weapon.spread;
             let spreadZ = (Math.random() - 0.5) * weapon.spread;
@@ -124,10 +128,8 @@ class Player {
             let finalDirY = (trajY / length) + spreadY;
             let finalDirZ = (trajZ / length) + spreadZ;
 
-            // Normaliza o vetor novamente para a velocidade ser constante
             let finalLength = Math.sqrt(finalDirX*finalDirX + finalDirY*finalDirY + finalDirZ*finalDirZ);
 
-            let gunDamage = Math.floor(weapon.damage * (1 + this.d))
             let effectiveDamage = Math.floor(weapon.damage * (1 + this.damageMultiplier * 0.1));
             spawnedProjectiles.push(new Projectile(
                 spawnX, spawnY, spawnZ, 
@@ -139,37 +141,69 @@ class Player {
         return spawnedProjectiles;
     }
 
-    update(inputHandler, isMoving) {
+    // ATUALIZADO: Processa pulo, gravidade e gastos de fôlego
+// ATUALIZADO: Suporte a pulo longo com inércia de corrida
+    update(inputHandler, isMoving, cameraPosition) {
         if (this.shootCooldown > 0) this.shootCooldown--;
         if (this.damageAudioCooldown > 0) this.damageAudioCooldown--;
         if (this.muzzleFlashFrames > 0) this.muzzleFlashFrames--;
 
-        if (inputHandler.isPressed('shift') && isMoving && !this.isExhausted) {
-            this.currentSpeed = this.runSpeed;
-            this.stamina -= 0.6; 
+        // 1. DETERMINAÇÃO DA VELOCIDADE NO CHÃO (Antes de computar o pulo)
+        if (this.isGrounded) {
+            if (inputHandler.isPressed('shift') && isMoving && !this.isExhausted) {
+                this.currentSpeed = this.runSpeed;
+                this.stamina -= 0.6; 
 
-            if (this.stamina <= 0) {
-                this.stamina = 0;
-                this.isExhausted = true;
-                this.staminaCooldown = 90; 
-            }
-        } else {
-            this.currentSpeed = this.walkSpeed;
-
-            if (this.staminaCooldown > 0) {
-                this.staminaCooldown--;
-            } else {
-                if (this.stamina < this.maxStamina) {
-                    this.stamina += 0.4; 
-                    if (this.stamina >= 20) this.isExhausted = false; 
-                    if (this.stamina > this.maxStamina) this.stamina = this.maxStamina;
+                if (this.stamina <= 0) {
+                    this.stamina = 0;
+                    this.isExhausted = true;
+                    this.staminaCooldown = 90; 
                 }
+            } else {
+                this.currentSpeed = this.walkSpeed;
+
+                if (this.staminaCooldown > 0) {
+                    this.staminaCooldown--;
+                } else {
+                    if (this.stamina < this.maxStamina) {
+                        this.stamina += 0.4; 
+                        if (this.stamina >= 20) this.isExhausted = false; 
+                        if (this.stamina > this.maxStamina) this.stamina = this.maxStamina;
+                    }
+                }
+            }
+        }
+
+        // 2. INPUT DE PULO (Verifica barra de espaço)
+        // Removida a trava de exaustão para permitir saltos normais se houver stamina
+        if (inputHandler.isPressed(' ') && this.isGrounded && this.stamina >= this.jumpCost) {
+            this.stamina -= this.jumpCost;
+            
+            // DICA: Se estiver correndo, damos um impulso extra para frente no ar!
+            if (this.currentSpeed === this.runSpeed) {
+                this.velocityV = this.jumpForce * 1.1; // Pula ligeiramente mais alto se correr
+            } else {
+                this.velocityV = this.jumpForce;
+            }
+            
+            this.isGrounded = false;
+            this.staminaCooldown = 40; 
+        }
+
+        // 3. APLICAÇÃO DA FÍSICA VERTICAL (Gravidade)
+        if (!this.isGrounded) {
+            cameraPosition.y += this.velocityV; 
+            this.velocityV -= this.gravity;     
+
+            if (cameraPosition.y <= this.defaultHeight) {
+                cameraPosition.y = this.defaultHeight;
+                this.velocityV = 0.0;
+                this.isGrounded = true;
             }
         }
 
         updateHUD(this);
     }
-    
 }
 
 function updateHUD(player) {
