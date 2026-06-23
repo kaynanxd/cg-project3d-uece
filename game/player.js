@@ -1,8 +1,8 @@
 // game/player.js
 const WEAPON_DEFS = [
-    { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false },
-    { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true  },
-    { id: 'escopeta', cooldown: 60, damage: 15, pellets: 8, spread: 0.15, isAuto: false }
+    { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 },
+    { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05  },
+    { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.15, isAuto: false,recoilZ: 0.75, recoilY: 0.15 }
 ];
 
 // game/player.js

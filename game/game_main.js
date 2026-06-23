@@ -6,7 +6,7 @@ let currentState = GameState.MENU;
 const DifficultyConfig = {
     EASY:   { hordeCount: 3, gunUpgradeWave: 2, baseEnemies: 3,  enemySpeed: 0.06, enemyHp: 60,  bossHp: 600 ,bossSpeed: 0.08},
     NORMAL: { hordeCount: 5, gunUpgradeWave: 2, baseEnemies: 6,  enemySpeed: 0.08, enemyHp: 80, bossHp: 1000 ,bossSpeed: 0.10},
-    HARD:   { hordeCount: 7, gunUpgradeWave: 3, baseEnemies: 10, enemySpeed: 0.10, enemyHp: 100, bossHp: 1500 , bossSpeed: 0.10}
+    HARD:   { hordeCount: 7, gunUpgradeWave: 2, baseEnemies: 10, enemySpeed: 0.10, enemyHp: 100, bossHp: 1500 , bossSpeed: 0.10}
 };
 
 let currentDifficulty;
@@ -451,10 +451,24 @@ function updatePlaying() {
         return;
     }
 
+// Atualiza os projéteis permitindo que atravessem lápides (IDs 2 e 3) e estátuas (ID 4)
     projectiles.forEach(p => {
         p.update();
-        if (p.active && isWallBlocking(p.x, p.z, 0)) {
-            p.active = false;
+        if (p.active) {
+            // Calcula em qual quadrado do grid o projétil está neste frame
+            const gx = Math.floor(p.x / TILE_SIZE);
+            const gz = Math.floor(p.z / TILE_SIZE);
+
+            // Verifica se está dentro dos limites da matriz do mapa
+            if (gz >= 0 && gz < levelMap.length && gx >= 0 && gx < levelMap[0].length) {
+                // O projétil SÓ se destrói se bater na parede real (ID 1)
+                if (levelMap[gz][gx] === 1) {
+                    p.active = false;
+                }
+            } else {
+                // Se o projétil sair completamente para fora dos limites do mapa do jogo, desativa ele
+                p.active = false;
+            }
         }
     });
     projectiles = projectiles.filter(p => p.active);
@@ -795,8 +809,13 @@ function renderPlaying() {
         gl.uniform4f(programInfo.uniforms.u_color, 1.0, 1.0, 1.0, 1.0); 
         
         // Calcula o recuo visual baseando-se no cooldown máximo da arma atual
-        let recoilOffsetZ = (player.shootCooldown / currentWeaponObj.cooldown) * 0.25; 
-        let recoilOffsetY = (player.shootCooldown / currentWeaponObj.cooldown) * 0.04;
+// CORREÇÃO: Puxa o multiplicador de recuo configurado especificamente para a arma atual
+        let weaponRecoilZ = currentWeaponObj.recoilZ !== undefined ? currentWeaponObj.recoilZ : 0.25;
+        let weaponRecoilY = currentWeaponObj.recoilY !== undefined ? currentWeaponObj.recoilY : 0.04;
+
+        // Calcula a interpolação do recuo com base no cooldown restante
+        let recoilOffsetZ = (player.shootCooldown / currentWeaponObj.cooldown) * weaponRecoilZ; 
+        let recoilOffsetY = (player.shootCooldown / currentWeaponObj.cooldown) * weaponRecoilY;
 
         let bobX = 0;
         let bobY = 0;
