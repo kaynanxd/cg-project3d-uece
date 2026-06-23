@@ -34,7 +34,7 @@ O projeto utiliza exclusivamente:
 
 ## Como Executar
 
-[Jogar](https://kaynanxd.github.io/cg-project3d-uece/)
+[Clique Aqui Para Jogar](https://kaynanxd.github.io/cg-project3d-uece/)
 
 Caso queira compilar:
 1. No terminal da pasta do projeto: `python -m http.server 8000`
