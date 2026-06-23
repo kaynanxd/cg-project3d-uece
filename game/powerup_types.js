@@ -2,11 +2,11 @@ const POWERUP_TYPES = [
     {
         id: 'maxHp',
         name: '+25 Max HP',
-        desc: 'Aumenta a vida máxima em 25',
+        desc: 'Aumenta a vida em 50',
         color: '#ff3333',
         apply: (player) => {
             player.maxHp += 25;
-            player.hp = Math.min(player.hp + 25, player.maxHp);
+            player.hp = Math.min(player.hp + 50, player.maxHp);
         }
     },
     {
@@ -22,7 +22,7 @@ const POWERUP_TYPES = [
     {
         id: 'damage',
         name: '+DMG UP',
-        desc: 'Adiciona +10% do dano base da arma',
+        desc: 'Adiciona +20% do dano base da arma',
         color: '#ff8800',
         apply: (player) => {
             player.damageMultiplier += 1;
