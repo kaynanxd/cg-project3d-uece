@@ -1,8 +1,8 @@
 const POWERUP_TYPES = [
     {
         id: 'maxHp',
-        name: '+25 Max Vida',
-        desc: 'Aumenta a vida em 50',
+        name: '+25 Max Total Vida',
+        desc: 'E aumenta a vida em 50',
         color: '#ff3333',
         apply: (player) => {
             player.maxHp += 25;

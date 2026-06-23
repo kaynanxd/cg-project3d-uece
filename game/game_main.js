@@ -2,9 +2,9 @@ const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3, PAUSED: 4, UP
 let currentState = GameState.MENU;
 
 const DifficultyConfig = {
-    EASY:   { hordeCount: 3, gunUpgradeWave: 2, baseEnemies: 3,  enemySpeed: 0.08, enemyHp: 60,  bossHp: 600,  bossSpeed: 0.08 },
-    NORMAL: { hordeCount: 5, gunUpgradeWave: 2, baseEnemies: 5,  enemySpeed: 0.09, enemyHp: 80,  bossHp: 1000, bossSpeed: 0.10 },
-    HARD:   { hordeCount: 7, gunUpgradeWave: 2, baseEnemies: 7, enemySpeed: 0.10, enemyHp: 100, bossHp: 1500, bossSpeed: 0.12 }
+    EASY:   { hordeCount: 3, gunUpgradeWave: 2, baseEnemies: 4,  enemySpeed: 0.08, enemyHp: 60,  bossHp: 1200,  bossSpeed: 0.10 },
+    NORMAL: { hordeCount: 5, gunUpgradeWave: 2, baseEnemies: 6,  enemySpeed: 0.10, enemyHp: 80,  bossHp: 2000, bossSpeed: 0.12 },
+    HARD:   { hordeCount: 7, gunUpgradeWave: 2, baseEnemies: 8, enemySpeed: 0.12, enemyHp: 100, bossHp: 3000, bossSpeed: 0.14 }
 };
 
 let currentDifficulty;
@@ -218,6 +218,12 @@ async function initGame() {
     });
 
     window.addEventListener('keydown', (e) => {
+
+        if (isCutsceneRunning && e.key === ' ') {
+        e.preventDefault();
+        endCutscene();
+        return;
+        }
         if (e.key === "Escape") {
             if (currentState === GameState.PLAYING) pauseGame();
             else if (currentState === GameState.PAUSED) resumeGame();
@@ -248,12 +254,52 @@ function resumeGame() {
     document.getElementById("pause-screen").style.display = "none";
 }
 
+let isCutsceneRunning = false;
+let savedDifficulty = "NORMAL"; 
+
 async function startGame(diffStr, event) {
     if (event) event.stopPropagation();
     if (gameStarting) return;
+    
+    savedDifficulty = diffStr; 
+    startCutscene();
+}
+
+function startCutscene() {
+    isCutsceneRunning = true;
+    document.getElementById("menu-screen").style.display = "none";
+    
+    const container = document.getElementById("cutscene-container");
+    const video = document.getElementById("intro-video");
+    
+    container.style.display = "flex";
+    
+    video.play().catch(e => {
+        console.warn("Autoplay bloqueado ou erro no vídeo, pulando direto para o jogo:", e);
+        endCutscene();
+    });
+
+    video.onended = () => {
+        endCutscene();
+    };
+}
+
+function endCutscene() {
+    if (!isCutsceneRunning) return;
+    isCutsceneRunning = false;
+    
+    const container = document.getElementById("cutscene-container");
+    const video = document.getElementById("intro-video");
+    
+    video.pause();
+    container.style.display = "none";
+    
+    runActualGame(savedDifficulty);
+}
+
+async function runActualGame(diffStr) {
     gameStarting = true;
 
-    document.getElementById("menu-screen").style.display = "none";
     document.getElementById("crosshair").style.display = "block";
     document.getElementById("hud").style.display = "block";
     document.getElementById("hud-wave").style.display = "block";
@@ -285,9 +331,16 @@ function showUpgradeSelection() {
     document.exitPointerLock();
     AudioManager.play("powerup");
 
+    isMouseDown = false;
+    mouseJustPressed = false;
+
     let choices = [...POWERUP_TYPES].sort(() => Math.random() - 0.5).slice(0, 3);
     let container = document.getElementById('upgrade-choices');
     container.innerHTML = '';
+    
+    container.style.pointerEvents = "none";
+    setTimeout(() => { container.style.pointerEvents = "auto"; }, 200);
+
     for (let type of choices) {
         let card = document.createElement('div');
         card.className = 'upgrade-card';
@@ -299,10 +352,16 @@ function showUpgradeSelection() {
     document.getElementById('upgrade-screen').style.display = 'flex';
 }
 
+
+
 function selectUpgrade(type) {
     type.apply(player);
     updateHUD(player);
     document.getElementById('upgrade-screen').style.display = 'none';
+
+    isMouseDown = false;
+    mouseJustPressed = false;
+    
     enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
     currentState = GameState.PLAYING;
     document.getElementById('glcanvas1').requestPointerLock();
@@ -317,10 +376,17 @@ const WEAPON_CHOICES = [
 function showWeaponSelection() {
     currentState = GameState.UPGRADING;
     document.exitPointerLock();
-    AudioManager.play("powerup");
+    AudioManager.play("powerup", 0.5);
+
+    isMouseDown = false;
+    mouseJustPressed = false;
 
     let container = document.getElementById('weapon-choices');
     container.innerHTML = '';
+    
+    container.style.pointerEvents = "none";
+    setTimeout(() => { container.style.pointerEvents = "auto"; }, 200);
+
     for (let w of WEAPON_CHOICES) {
         let card = document.createElement('div');
         card.className = 'upgrade-card';
@@ -338,6 +404,10 @@ function selectWeapon(weaponId) {
     player.setPermanentWeapon(index);
     updateHUD(player);
     document.getElementById('weapon-screen').style.display = 'none';
+    
+    isMouseDown = false;
+    mouseJustPressed = false;
+    
     enemies = hordeManager.spawnHorde(camera.position.x, camera.position.z);
     currentState = GameState.PLAYING;
     document.getElementById('glcanvas1').requestPointerLock();
@@ -411,14 +481,10 @@ function updatePlaying() {
 
     projectiles.forEach(p => {
         p.update();
-        if (p.active) {
-            const gx = Math.floor(p.x / TILE_SIZE);
-            const gz = Math.floor(p.z / TILE_SIZE);
-            if (gz >= 0 && gz < levelMap.length && gx >= 0 && gx < levelMap[0].length) {
-                if (levelMap[gz][gx] === 1) p.active = false;
-            } else {
-                p.active = false;
-            }
+        
+        const distDoCentro = Math.sqrt(p.x * p.x + p.z * p.z);
+        if (distDoCentro > 200.0) {
+            p.active = false;
         }
     });
     projectiles = projectiles.filter(p => p.active);

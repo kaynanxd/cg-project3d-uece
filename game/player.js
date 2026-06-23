@@ -18,7 +18,7 @@ class Player {
         this.muzzleFlashFrames = 0;
         
         this.walkSpeed = 0.08;
-        this.runSpeed = 0.15; 
+        this.runSpeed = 0.18; 
         this.currentSpeed = this.walkSpeed;
 
         this.velocityV = 0.0;        
@@ -81,7 +81,7 @@ class Player {
         this.shootCooldown = weapon.cooldown; 
         this.muzzleFlashFrames = 4;
         const weaponSound = weapon.sound || "gunshot";
-        AudioManager.play(weaponSound, 0.4);
+        AudioManager.play(weaponSound, 0.3);
 
         let cosPitch = Math.cos(pitch);
         let sinPitch = Math.sin(pitch);
