@@ -125,9 +125,9 @@
                 <div>HP: <span id="hud-hp">100</span>/<span id="hud-maxhp">100</span></div>
                 <div>STAMINA: <span id="hud-stamina">100</span>/<span id="hud-maxstamina">100</span></div>
                 <div class="stat-row">
-                    <span><span class="stat-label">DMG:</span> <span id="hud-damage">50</span></span>
-                    <span><span class="stat-label">LIVES:</span> <span id="hud-lives">0</span></span>
-                    <span><span class="stat-label">PIERCE:</span> <span id="hud-piercing">0</span></span>
+                    <span><span class="stat-label">DANO:</span> <span id="hud-damage">50</span></span>
+                    <span><span class="stat-label">VIDAS:</span> <span id="hud-lives">0</span></span>
+                    <span><span class="stat-label">PERFURAMENTO:</span> <span id="hud-piercing">0</span></span>
                 </div>
             </div>
         </div>
@@ -145,7 +145,7 @@
         </div>
 
         <div id="menu-screen" class="screen">
-            <h1>WEBGL DOOM</h1>
+            <h1>WEBGL FPS SHOOTER</h1>
             <p id="menu-status" style="color:#aaa;">Carregando assets...</p>
             <button class="btn" onclick="startGame('EASY', event)" disabled>Fácil</button>
             <button class="btn" onclick="startGame('NORMAL', event)" disabled>Normal</button>
@@ -165,7 +165,7 @@
 
         <div id="victory-screen" class="screen" style="display: none;">
             <h1 style="color: #33ff33; border-color: #33ff33;">VITÓRIA!</h1>
-            <p>O labirinto foi limpo.</p>
+            <p>O Chefe foi derrotado.</p>
             <button class="btn" onclick="location.reload()">Voltar ao Menu</button>
         </div>
     </div>

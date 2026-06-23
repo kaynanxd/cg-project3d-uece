@@ -1,11 +1,9 @@
-// game/player.js
 const WEAPON_DEFS = [
     { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 },
     { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05  },
     { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.15, isAuto: false,recoilZ: 0.75, recoilY: 0.15 }
 ];
 
-// game/player.js
 class Player {
     constructor() {
         this.maxHp = 100;
@@ -23,15 +21,12 @@ class Player {
         this.runSpeed = 0.15; 
         this.currentSpeed = this.walkSpeed;
 
-        // ==========================================
-        // NOVO: ATRIBUTOS DE FÍSICA DO PULO
-        // ==========================================
-        this.velocityV = 0.0;        // Velocidade vertical (Eixo Y)
-        this.isGrounded = true;     // Flag para saber se está pisando no chão
-        this.jumpCost = 20.0;        // Custo de stamina para pular
-        this.jumpForce = 0.22;       // Impulso inicial do pulo
-        this.gravity = 0.012;        // Força da gravidade aplicada por frame
-        this.defaultHeight = 1.5;    // Altura dos olhos do player no chão
+        this.velocityV = 0.0;        
+        this.isGrounded = true;    
+        this.jumpCost = 20.0;       
+        this.jumpForce = 0.22;       
+        this.gravity = 0.012;        
+        this.defaultHeight = 1.5;    
 
         this.weapons = [Object.assign({}, WEAPON_DEFS[0])];
         this.currentWeaponIndex = 0;
@@ -141,14 +136,11 @@ class Player {
         return spawnedProjectiles;
     }
 
-    // ATUALIZADO: Processa pulo, gravidade e gastos de fôlego
-// ATUALIZADO: Suporte a pulo longo com inércia de corrida
     update(inputHandler, isMoving, cameraPosition) {
         if (this.shootCooldown > 0) this.shootCooldown--;
         if (this.damageAudioCooldown > 0) this.damageAudioCooldown--;
         if (this.muzzleFlashFrames > 0) this.muzzleFlashFrames--;
 
-        // 1. DETERMINAÇÃO DA VELOCIDADE NO CHÃO (Antes de computar o pulo)
         if (this.isGrounded) {
             if (inputHandler.isPressed('shift') && isMoving && !this.isExhausted) {
                 this.currentSpeed = this.runSpeed;
@@ -174,14 +166,12 @@ class Player {
             }
         }
 
-        // 2. INPUT DE PULO (Verifica barra de espaço)
-        // Removida a trava de exaustão para permitir saltos normais se houver stamina
+        // 2. INPUT DE PULO 
         if (inputHandler.isPressed(' ') && this.isGrounded && this.stamina >= this.jumpCost) {
             this.stamina -= this.jumpCost;
             
-            // DICA: Se estiver correndo, damos um impulso extra para frente no ar!
             if (this.currentSpeed === this.runSpeed) {
-                this.velocityV = this.jumpForce * 1.1; // Pula ligeiramente mais alto se correr
+                this.velocityV = this.jumpForce * 1.1; 
             } else {
                 this.velocityV = this.jumpForce;
             }
@@ -190,7 +180,6 @@ class Player {
             this.staminaCooldown = 40; 
         }
 
-        // 3. APLICAÇÃO DA FÍSICA VERTICAL (Gravidade)
         if (!this.isGrounded) {
             cameraPosition.y += this.velocityV; 
             this.velocityV -= this.gravity;     

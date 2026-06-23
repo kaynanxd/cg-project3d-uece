@@ -1,7 +1,7 @@
-// engine/matrix.js
+
 
 const Matrix4 = {
-    // Cria uma matriz identidade
+
     identity: function() {
         return [
             1, 0, 0, 0,
@@ -79,7 +79,7 @@ const Matrix4 = {
         ];
     },
 
-    // Matriz de Projeção Perspectiva (Obrigatório para o efeito 3D)
+    // Matriz de Projeção Perspectiva
     perspective: function(fieldOfViewInRadians, aspect, near, far) {
         let f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
         let rangeInv = 1.0 / (near - far);

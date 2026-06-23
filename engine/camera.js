@@ -1,5 +1,3 @@
-// engine/camera.js
-
 class FPSCamera {
     constructor(posX, posY, posZ) {
         this.position = { x: posX, y: posY, z: posZ };
@@ -9,7 +7,6 @@ class FPSCamera {
         this.moveSpeed = 0.08;
         this.lookSpeed = 0.0025;
 
-        // SOM DE PASSOS
         this.stepCooldown = 0;
     }
 
@@ -32,7 +29,7 @@ class FPSCamera {
         let rightX = cosYaw;
         let rightZ = -sinYaw;
 
-        // Movimento aplicando o parâmetro de speed dinâmico
+
         if (inputHandler.isPressed('w')) {
             moving = true;
             this.position.x += forwardX * speed;
@@ -57,7 +54,6 @@ class FPSCamera {
         if (moving) {
             if (this.stepCooldown <= 0) {
                 AudioManager.play("footstep", 1);
-                // Dica: Se quiser passos rápidos ao correr, mude o cooldown baseado na speed!
                 this.stepCooldown = speed > 0.1 ? 35 : 60;
             }
         }
@@ -66,7 +62,7 @@ class FPSCamera {
             this.stepCooldown--;
         }
 
-        return moving; // Retorna se o jogador está andando/correndo
+        return moving; 
     }
 
     getViewMatrix() {

@@ -1,4 +1,3 @@
-// game/projectile.js
 class Projectile {
     constructor(x, y, z, dirX, dirY, dirZ, speed, damage = 50, piercingLevel = 0) {
         this.x = x;

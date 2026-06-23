@@ -1,7 +1,7 @@
 const POWERUP_TYPES = [
     {
         id: 'maxHp',
-        name: '+25 Max HP',
+        name: '+25 Max Vida',
         desc: 'Aumenta a vida em 50',
         color: '#ff3333',
         apply: (player) => {
@@ -21,7 +21,7 @@ const POWERUP_TYPES = [
     },
     {
         id: 'damage',
-        name: '+DMG UP',
+        name: '+DANO UP',
         desc: 'Adiciona +20% do dano base da arma',
         color: '#ff8800',
         apply: (player) => {
@@ -30,7 +30,7 @@ const POWERUP_TYPES = [
     },
     {
         id: 'extraLife',
-        name: '+1 Extra Life',
+        name: '+1 VIDA Extra ',
         desc: 'Ganha uma vida extra ao morrer',
         color: '#3388ff',
         apply: (player) => {

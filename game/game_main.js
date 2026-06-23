@@ -1,5 +1,3 @@
-// game/game_main.js
-
 const GameState = { MENU: 0, PLAYING: 1, GAME_OVER: 2, VICTORY: 3, PAUSED: 4, UPGRADING: 5 };
 let currentState = GameState.MENU;
 
@@ -191,7 +189,6 @@ async function initGame() {
         if (e.button === 0) isMouseDown = false;
     });
 
-    // Tecla Q como alternativa para atirar
     document.addEventListener('keydown', (e) => {
         if (currentState === GameState.PLAYING && document.pointerLockElement === canvas && (e.key === 'q' || e.key === 'Q')) {
             let proj = player.shoot(camera.position.x, camera.position.y, camera.position.z, camera.yaw, camera.pitch);
@@ -224,7 +221,6 @@ async function initGame() {
         }
     });
 
-    // Tudo carregado: habilita os botões do menu
     document.getElementById("menu-screen").style.display = "flex";
     document.getElementById("menu-status").textContent = "Selecione a Dificuldade";
     document.querySelectorAll("#menu-screen .btn").forEach(b => b.disabled = false);
@@ -249,7 +245,6 @@ async function startGame(diffStr, event) {
     if (gameStarting) return;
     gameStarting = true;
 
-    // Esconde o menu imediatamente, antes de qualquer await
     document.getElementById("menu-screen").style.display = "none";
     document.getElementById("crosshair").style.display = "block";
     document.getElementById("hud").style.display = "block";
@@ -406,7 +401,6 @@ function updatePlaying() {
         return;
     }
 
-    // Projéteis só colidem com paredes reais (ID 1), atravessam props
     projectiles.forEach(p => {
         p.update();
         if (p.active) {
@@ -430,7 +424,6 @@ function updatePlaying() {
         e.update(camera.position.x, camera.position.z, player);
         const newEX = e.x, newEZ = e.z;
 
-        // Colisão do inimigo com paredes, por eixo separado
         e.x = newEX; e.z = oldEZ;
         if (isWallBlocking(e.x, e.z, e.radius)) e.x = oldEX;
         e.z = newEZ;
@@ -447,7 +440,6 @@ function updatePlaying() {
         }
     }
 
-    // Separação de inimigos sobrepostos
     for (let i = 0; i < enemies.length; i++) {
         const e1 = enemies[i];
         if (!e1.active || e1.isDying) continue;
@@ -515,11 +507,11 @@ function renderPlaying() {
     const sinPitch = Math.sin(camera.pitch), cosPitch = Math.cos(camera.pitch);
     gl.uniform3f(programInfo.uniforms.u_lightDirection, -sinYaw * cosPitch, sinPitch, -cosYaw * cosPitch);
 
-    // Cone de luz da lanterna (cutoff em graus → coseno para dot product no shader)
+    // Cone de luz da lanterna 
     gl.uniform1f(programInfo.uniforms.u_lightCutOff,      Math.cos(25 * Math.PI / 180));
     gl.uniform1f(programInfo.uniforms.u_lightOuterCutOff, Math.cos(35 * Math.PI / 180));
 
-    // Luzes dinâmicas dos projéteis (máx 5)
+    // Luzes dinâmicas dos projéteis
     const activeProjs = projectiles.filter(p => p.active);
     const numProjLights = Math.min(activeProjs.length, 5);
     gl.uniform1i(programInfo.uniforms.u_numProjLights, numProjLights);
@@ -536,7 +528,7 @@ function renderPlaying() {
         gl.uniform3fv(programInfo.uniforms.u_projLightColors,    projColors);
     }
 
-    // Cor da luz: amarela durante muzzle flash, branca no resto
+    // Cor da luz: amarela durante flash, branca no resto
     function aplicarLuzDinamica() {
         if (player && player.muzzleFlashFrames > 0) gl.uniform3f(programInfo.uniforms.u_lightColor, 3.0, 2.0, 0.2);
         else                                         gl.uniform3f(programInfo.uniforms.u_lightColor, 2.0, 2.0, 2.0);
@@ -643,7 +635,7 @@ function renderPlaying() {
     gl.disable(gl.BLEND);
     gl.depthMask(true);
 
-    // 5. Arma no HUD (desenhada em espaço de câmera, sem depth buffer do mundo)
+    // 5. Arma no HUD 
     const currentWeaponObj = player.weapons[player.currentWeaponIndex];
     const activeWeaponMesh = weaponMeshes[currentWeaponObj.id];
 

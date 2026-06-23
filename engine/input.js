@@ -1,5 +1,3 @@
-// engine/input.js
-
 class InputHandler {
     constructor(canvasId) {
         this.keys = {};
@@ -16,10 +14,7 @@ class InputHandler {
             this.keys[e.key.toLowerCase()] = false;
         });
 
-        // Solicita Pointer Lock ao clicar no canvas,
-        // mas SOMENTE se o jogo já estiver em andamento (não no menu).
         this.canvas.addEventListener('click', () => {
-            // Só pede pointer lock se o jogo está ativo E o lock ainda não está ativo
             if (typeof currentState !== 'undefined' &&
                 (currentState === GameState.PLAYING || currentState === GameState.PAUSED) &&
                 document.pointerLockElement !== this.canvas) {
@@ -27,7 +22,6 @@ class InputHandler {
             }
         });
 
-        // Captura movimento do mouse acumulado por frame
         document.addEventListener('mousemove', (e) => {
             if (document.pointerLockElement === this.canvas) {
                 this.mouseDeltaX += e.movementX;
@@ -36,7 +30,6 @@ class InputHandler {
         });
     }
 
-    // Retorna e limpa o deslocamento do mouse do frame atual
     getMouseDelta() {
         let deltas = { x: this.mouseDeltaX, y: this.mouseDeltaY };
         this.mouseDeltaX = 0;

@@ -1,5 +1,3 @@
-// game/horde_manager.js
-
 class HordeManager {
     constructor(config) {
         this.config = config;
@@ -24,7 +22,6 @@ class HordeManager {
         };
     }
 
-    // MODIFICADO: Agora recebe a posição do jogador para criar o círculo ao redor dele
     spawnHorde(playerX = 0, playerZ = 0) {
         let spawnList = [];
         document.getElementById('wave-count').innerText = this.currentHorde;

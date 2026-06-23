@@ -17,9 +17,8 @@ class Enemy {
         
         this.yaw = 0; 
 
-        // NOVO: Offset aleatório e timer para que cada inimigo oscile em um ritmo único
         this.wobbleTimer = Math.random() * 100;
-        this.wobbleSpeed = 0.05 + Math.random() * 0.03; // Velocidade da oscilação
+        this.wobbleSpeed = 0.05 + Math.random() * 0.03;
     }
 
     update(playerX, playerZ, playerObj) {
@@ -40,7 +39,6 @@ class Enemy {
 
         this.yaw = Math.atan2(dx, dz);
 
-        // Sistema de Grunhido Estrito
         if (distance < 30) {
             if (Enemy.globalGrowlCooldown <= 0) {
                 AudioManager.play("enemy_growl", 0.3);
@@ -48,34 +46,25 @@ class Enemy {
             }
         }
 
-        // NOVO: Atualiza o timer de oscilação do inimigo
         this.wobbleTimer += this.wobbleSpeed;
 
         if (distance > 1.0) {
-            // Direção base em linha reta até o jogador
+
             let dirX = dx / distance;
             let dirZ = dz / distance;
-
-            // NOVO: Calcula o vetor perpendicular (direita/esquerda do inimigo)
-            // Se a direção para frente é (dirX, dirZ), o lado perpendicular é (-dirZ, dirX)
             let sideX = -dirZ;
             let sideZ = dirX;
 
-            // NOVO: Intensidade do desvio lateral (amplitude)
-            // Inimigos normais balançam um pouco mais rápido, Boss desvia menos por ser pesado
             let sideAmplitude = this.isBoss ? 0.02 : 0.04;
             let lateralWobble = Math.sin(this.wobbleTimer) * sideAmplitude;
 
-            // Aplica o movimento: Linha reta + desvio senoidal para os lados
             this.x += (dirX * this.speed) + (sideX * lateralWobble);
             this.z += (dirZ * this.speed) + (sideZ * lateralWobble);
 
-            // NOVO: Flutuação suave para cima e para baixo (Eixo Y)
             let hoverAmplitude = this.isBoss ? 0.15 : 0.25;
             this.y = Math.cos(this.wobbleTimer * 1.5) * hoverAmplitude;
 
         } else {
-            // Se estiver colado no jogador, para de flutuar bizarramente e ataca
             this.y = 0; 
             if (this.attackCooldown <= 0) {
                 playerObj.takeDamage(this.damage);

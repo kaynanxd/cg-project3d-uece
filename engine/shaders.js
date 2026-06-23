@@ -1,5 +1,3 @@
-// engine/shaders.js
-
 const Shaders = {
     vertexSource: `
         attribute vec4 a_position;
@@ -42,9 +40,9 @@ fragmentSource: `
     uniform vec3 u_lightPosition;
     uniform vec3 u_viewPosition;
     uniform vec3 u_lightColor; 
-    uniform vec3 u_lightDirection; // NOVO: Para onde a lanterna aponta
-    uniform float u_lightCutOff; // NOVO: Borda interna do cone (luz forte)
-    uniform float u_lightOuterCutOff; // NOVO: Borda externa do cone (esmaecimento)
+    uniform vec3 u_lightDirection; 
+    uniform float u_lightCutOff; 
+    uniform float u_lightOuterCutOff;
 
     // --- LUZES DOS PROJÉTEIS ---
     uniform int u_numProjLights; 
@@ -65,9 +63,7 @@ fragmentSource: `
         vec3 totalDiffuse = vec3(0.0);
         vec3 totalSpecular = vec3(0.0);
 
-        // ==========================================
         // CÁLCULO 1: LUZ DO JOGADOR (LANTERNA / SPOTLIGHT)
-        // ==========================================
         vec3 lightDirPlayer = normalize(u_lightPosition - v_position);
         
         // Calcula o ângulo entre a direção do pixel e o centro do foco da lanterna
@@ -89,9 +85,7 @@ fragmentSource: `
         float specPlayer = pow(max(dot(viewDir, reflectDirPlayer), 0.0), 32.0);
         totalSpecular += 0.8 * specPlayer * u_lightColor * attPlayer * intensity; 
 
-        // ==========================================
         // CÁLCULO 2: LUZES DOS PROJÉTEIS (Continua igual, irradiando pra todo lado)
-        // ==========================================
         for(int i = 0; i < 5; i++) {
             if (i >= u_numProjLights) break; 
             float distProj = length(u_projLightPositions[i] - v_position);

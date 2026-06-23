@@ -1,7 +1,6 @@
-// engine/mesh.js
 
 class Mesh {
-    // Adicionado parâmetro colorData
+
     constructor(gl, vertexData, texCoordData, normalData, colorData = null) {
         this.gl = gl;
         this.vertexCount = vertexData.length / 3;
@@ -10,7 +9,6 @@ class Mesh {
         this.texCoordBuffer = this.createBuffer(new Float32Array(texCoordData));
         this.normalBuffer = this.createBuffer(new Float32Array(normalData));
         
-        // Verifica se existem dados de cor (do MTL)
         if (colorData && colorData.length > 0) {
             this.colorBuffer = this.createBuffer(new Float32Array(colorData));
             this.hasVertexColors = true;

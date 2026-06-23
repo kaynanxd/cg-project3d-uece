@@ -1,5 +1,3 @@
-// engine/obj_loader.js
-
 class OBJLoader {
     static async load(gl, url) {
         const response = await fetch(url);
@@ -12,10 +10,10 @@ class OBJLoader {
         const webglVertexData = [];
         const webglTexcoordData = [];
         const webglNormalData = [];
-        const webglColorData = []; // Buffer para as cores do MTL
+        const webglColorData = []; 
 
         let materials = {};
-        let activeMaterial = [1.0, 1.0, 1.0, 1.0]; // Padrão: Branco
+        let activeMaterial = [1.0, 1.0, 1.0, 1.0]; 
 
         const lines = text.split('\n');
 
@@ -27,7 +25,7 @@ class OBJLoader {
             const keyword = parts[0];
 
             if (keyword === 'mtllib') {
-                // Tenta carregar o arquivo MTL na mesma pasta do OBJ
+
                 try {
                     const mtlName = parts[1];
                     const mtlUrl = url.substring(0, url.lastIndexOf('/') + 1) + mtlName;
@@ -83,7 +81,6 @@ class OBJLoader {
                             webglNormalData.push(0, 0, 1);
                         }
                         
-                        // Associa a cor do material ativo a este vértice
                         webglColorData.push(...activeMaterial);
                     };
 
