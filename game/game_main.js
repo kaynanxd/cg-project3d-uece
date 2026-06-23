@@ -3,8 +3,8 @@ let currentState = GameState.MENU;
 
 const DifficultyConfig = {
     EASY:   { hordeCount: 3, gunUpgradeWave: 2, baseEnemies: 3,  enemySpeed: 0.08, enemyHp: 60,  bossHp: 600,  bossSpeed: 0.08 },
-    NORMAL: { hordeCount: 5, gunUpgradeWave: 2, baseEnemies: 6,  enemySpeed: 0.10, enemyHp: 80,  bossHp: 1000, bossSpeed: 0.10 },
-    HARD:   { hordeCount: 7, gunUpgradeWave: 2, baseEnemies: 8, enemySpeed: 0.12, enemyHp: 100, bossHp: 1500, bossSpeed: 0.12 }
+    NORMAL: { hordeCount: 5, gunUpgradeWave: 2, baseEnemies: 5,  enemySpeed: 0.09, enemyHp: 80,  bossHp: 1000, bossSpeed: 0.10 },
+    HARD:   { hordeCount: 7, gunUpgradeWave: 2, baseEnemies: 7, enemySpeed: 0.10, enemyHp: 100, bossHp: 1500, bossSpeed: 0.12 }
 };
 
 let currentDifficulty;
@@ -88,7 +88,11 @@ async function initGame() {
     try {
         await AudioManager.load("music",      "assets/audio/musica_fundo.mp3");
         await AudioManager.load("footstep",   "assets/audio/passos.mp3");
-        await AudioManager.load("gunshot",    "assets/audio/tiro.mp3");
+
+        await AudioManager.load("sound_pistola",  "assets/audio/pistola.mp3");
+        await AudioManager.load("sound_akm",      "assets/audio/akm.mp3");
+        await AudioManager.load("sound_escopeta", "assets/audio/escopeta.mp3");
+
         await AudioManager.load("player_hit", "assets/audio/player_dano.mp3");
         await AudioManager.load("enemy_hit",  "assets/audio/inimigo_dano.mp3");
         await AudioManager.load("enemy_growl","assets/audio/grunhido.mp3");
@@ -189,10 +193,14 @@ async function initGame() {
         if (e.button === 0) isMouseDown = false;
     });
 
+
     document.addEventListener('keydown', (e) => {
+        const canvas = document.getElementById("glcanvas1");
         if (currentState === GameState.PLAYING && document.pointerLockElement === canvas && (e.key === 'q' || e.key === 'Q')) {
-            let proj = player.shoot(camera.position.x, camera.position.y, camera.position.z, camera.yaw, camera.pitch);
-            if (proj) projectiles.push(proj);
+            let projs = player.shoot(camera.position.x, camera.position.y, camera.position.z, camera.yaw, camera.pitch);
+            if (projs && projs.length > 0) {
+                projectiles.push(...projs); 
+            }
         }
     });
 

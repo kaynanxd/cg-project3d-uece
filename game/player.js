@@ -1,7 +1,7 @@
 const WEAPON_DEFS = [
-    { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 },
-    { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05  },
-    { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.15, isAuto: false,recoilZ: 0.75, recoilY: 0.15 }
+    { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_pistola"},
+    { id: 'akm',      cooldown: 8,  damage: 20, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_akm" },
+    { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.15, isAuto: false,recoilZ: 0.75, recoilY: 0.15, sound: "sound_escopeta" }
 ];
 
 class Player {
@@ -80,7 +80,8 @@ class Player {
         let weapon = this.weapons[this.currentWeaponIndex];
         this.shootCooldown = weapon.cooldown; 
         this.muzzleFlashFrames = 4;
-        AudioManager.play("gunshot", 0.4);
+        const weaponSound = weapon.sound || "gunshot";
+        AudioManager.play(weaponSound, 0.4);
 
         let cosPitch = Math.cos(pitch);
         let sinPitch = Math.sin(pitch);
