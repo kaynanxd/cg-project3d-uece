@@ -48,8 +48,9 @@ class Enemy {
 
         this.wobbleTimer += this.wobbleSpeed;
 
-        if (distance > 1.0) {
+    let attackRange = this.radius + 0.5;
 
+        if (distance > attackRange) {
             let dirX = dx / distance;
             let dirZ = dz / distance;
             let sideX = -dirZ;
@@ -65,10 +66,10 @@ class Enemy {
             this.y = Math.cos(this.wobbleTimer * 1.5) * hoverAmplitude;
 
         } else {
-            this.y = 0; 
+            this.y = 0;
             if (this.attackCooldown <= 0) {
                 playerObj.takeDamage(this.damage);
-                this.attackCooldown = 60; 
+                this.attackCooldown = 60;
             }
         }
 

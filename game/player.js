@@ -1,7 +1,7 @@
 const WEAPON_DEFS = [
-    { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_pistola", piercing: 0 },
+    { id: 'pistola',  cooldown: 30, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_pistola", piercing: 0 },
     { id: 'akm',      cooldown: 8,  damage: 25, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_akm", piercing: 0 } ,
-    { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.20, isAuto: false,recoilZ: 0.75, recoilY: 0.15, sound: "sound_escopeta", piercing: 0  },
+    { id: 'escopeta', cooldown: 50, damage: 20, pellets: 8, spread: 0.20, isAuto: false,recoilZ: 0.75, recoilY: 0.15, sound: "sound_escopeta", piercing: 0  },
     { id: 'sniper', cooldown: 80, damage: 150, pellets: 1, spread: 0.0, isAuto: false,recoilZ: 0.60, recoilY: 0.10, sound: "sound_sniper", piercing: 1 }
 ];
 
@@ -43,12 +43,14 @@ class Player {
         this.weapons = [Object.assign({}, WEAPON_DEFS[index])];
         this.currentWeaponIndex = 0;
         this.shootCooldown = 20;
+        updateHUD(this);
     }
 
     switchWeapon(index) {
         if (index >= 0 && index < this.weapons.length && this.currentWeaponIndex !== index) {
             this.currentWeaponIndex = index;
             this.shootCooldown = 20;
+            updateHUD(this);
         }
     }
 
@@ -61,6 +63,7 @@ class Player {
             this.currentWeaponIndex = this.weapons.length - 1;
         }
         this.shootCooldown = 20;
+        updateHUD(this);
     }
 
     takeDamage(amount) {
@@ -216,5 +219,6 @@ function updateHUD(player) {
     let weapon = player.weapons[player.currentWeaponIndex];
     document.getElementById('hud-damage').innerText = Math.floor(weapon.damage * (1 + player.damageMultiplier * 0.2));
     document.getElementById('hud-lives').innerText = player.extraLives;
-    document.getElementById('hud-piercing').innerText = player.piercingLevel;
+    let totalWeaponPiercing = (weapon.piercing || 0) + player.piercingLevel;
+    document.getElementById('hud-piercing').innerText = totalWeaponPiercing;
 }

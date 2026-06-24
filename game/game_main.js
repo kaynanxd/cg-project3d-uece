@@ -4,7 +4,7 @@ let currentState = GameState.MENU;
 const DifficultyConfig = {
     EASY:   { hordeCount: 4, gunUpgradeWave: [2, 4], baseEnemies: 4,  enemySpeed: 0.08, enemyHp: 60,  bossHp: 1200,  bossSpeed: 0.10 },
     NORMAL: { hordeCount: 5, gunUpgradeWave: [2, 4], baseEnemies: 5,  enemySpeed: 0.10, enemyHp: 80,  bossHp: 2000, bossSpeed: 0.12 },
-    HARD:   { hordeCount: 8, gunUpgradeWave: [2,4,6], baseEnemies: 6, enemySpeed: 0.12, enemyHp: 100, bossHp: 2800, bossSpeed: 0.14 },
+    HARD:   { hordeCount: 8, gunUpgradeWave: [2,4,6], baseEnemies: 6, enemySpeed: 0.11, enemyHp: 100, bossHp: 2800, bossSpeed: 0.14 },
 };
 
 let currentDifficulty;
@@ -323,7 +323,7 @@ async function runActualGame(diffStr) {
 
     try {
         if (AudioManager.audioCtx.state === "suspended") await AudioManager.audioCtx.resume();
-        AudioManager.playMusic("music", 0.04);
+        AudioManager.playMusic("music", 0.05);
     } catch (e) {
         console.warn("Erro de áudio:", e);
     }
@@ -333,7 +333,7 @@ async function runActualGame(diffStr) {
 
     if (diffStr === 'SURVIVAL') {
         isSurvivalMode = true;
-        currentDifficulty = { hordeCount: Infinity, gunUpgradeWave: [2, 4, 6], baseEnemies: 4, enemySpeed: 0.12, enemyHp: 80 };
+        currentDifficulty = { hordeCount: Infinity, gunUpgradeWave: [2, 4, 6], baseEnemies: 4, enemySpeed: 0.11, enemyHp: 80 };
     } else {
         isSurvivalMode = false;
         currentDifficulty = DifficultyConfig[diffStr];
@@ -589,12 +589,12 @@ function updatePlaying() {
         } else {
             showUpgradeSelection();
         }
-    } else if (status === "VICTORY") {
+        } else if (status === "VICTORY") {
             currentState = GameState.VICTORY;
             document.exitPointerLock();
             if (AudioManager.musicSource) { AudioManager.musicSource.stop(); AudioManager.musicSource = null; }
             AudioManager.play("vitoria");
-            document.getElementById("final-score").innerText = currentScore;
+            document.getElementById("victory-score").innerText = currentScore;
             document.getElementById("victory-screen").style.display = "flex";
             document.getElementById("crosshair").style.display = "none";
         }
