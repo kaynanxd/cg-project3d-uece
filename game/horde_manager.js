@@ -36,14 +36,16 @@ class HordeManager {
             return spawnList;
         }
 
-        // Spawna inimigos normais em um raio ao redor do JOGADOR
         for (let i = 0; i < this.enemiesToSpawn; i++) {
             let angle = Math.random() * Math.PI * 2;
             let distance = 30 + Math.random() * 15;
             let x = playerX + Math.cos(angle) * distance;
             let z = playerZ + Math.sin(angle) * distance;
             let clamped = this._clampInsideArena(x, z, 1.5);
-            spawnList.push(new Enemy(clamped.x, clamped.z, this.config.enemyHp, this.config.enemySpeed, false));
+            
+            let assignedMeshType = (i % 2 === 0) ? 1 : 2;
+
+            spawnList.push(new Enemy(clamped.x, clamped.z, this.config.enemyHp, this.config.enemySpeed, false, assignedMeshType));
         }
 
         this.enemiesToSpawn += 5; 

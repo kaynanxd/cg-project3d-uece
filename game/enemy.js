@@ -1,7 +1,7 @@
 class Enemy {
     static globalGrowlCooldown = 0;
 
-    constructor(x, z, hp, speed, isBoss = false) {
+    constructor(x, z, hp, speed, isBoss = false, meshType = 1) {
         this.x = x;
         this.y = 0; 
         this.z = z;
@@ -14,8 +14,8 @@ class Enemy {
         this.attackCooldown = 0;
         this.flashFrames = 0; 
         this.isDying = false; 
-        
         this.yaw = 0; 
+        this.meshType = meshType;
 
         this.wobbleTimer = Math.random() * 100;
         this.wobbleSpeed = 0.05 + Math.random() * 0.03;

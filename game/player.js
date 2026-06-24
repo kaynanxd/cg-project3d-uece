@@ -1,7 +1,8 @@
 const WEAPON_DEFS = [
-    { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_pistola"},
-    { id: 'akm',      cooldown: 8,  damage: 25, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_akm" },
-    { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.20, isAuto: false,recoilZ: 0.75, recoilY: 0.15, sound: "sound_escopeta" }
+    { id: 'pistola',  cooldown: 40, damage: 40, pellets: 1, spread: 0.0,  isAuto: false,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_pistola", piercing: 0 },
+    { id: 'akm',      cooldown: 8,  damage: 25, pellets: 1, spread: 0.04, isAuto: true,recoilZ: 0.25, recoilY: 0.05 , sound: "sound_akm", piercing: 0 } ,
+    { id: 'escopeta', cooldown: 50, damage: 15, pellets: 8, spread: 0.20, isAuto: false,recoilZ: 0.75, recoilY: 0.15, sound: "sound_escopeta", piercing: 0  },
+    { id: 'sniper', cooldown: 80, damage: 150, pellets: 1, spread: 0.0, isAuto: false,recoilZ: 0.60, recoilY: 0.10, sound: "sound_sniper", piercing: 1 }
 ];
 
 class Player {
@@ -136,12 +137,12 @@ class Player {
             let finalDirZ = (trajZ / length) + spreadZ;
 
             let finalLength = Math.sqrt(finalDirX*finalDirX + finalDirY*finalDirY + finalDirZ*finalDirZ);
-
+            let totalPiercing = (weapon.piercing || 0) + this.piercingLevel;
             let effectiveDamage = Math.floor(weapon.damage * (1 + this.damageMultiplier * 0.1));
             spawnedProjectiles.push(new Projectile(
                 spawnX, spawnY, spawnZ, 
                 finalDirX / finalLength, finalDirY / finalLength, finalDirZ / finalLength, 
-                1.5, effectiveDamage, this.piercingLevel
+                1.5, effectiveDamage, totalPiercing
             ));
         }
         

@@ -4,7 +4,7 @@ let currentState = GameState.MENU;
 const DifficultyConfig = {
     EASY:   { hordeCount: 4, gunUpgradeWave: [2, 4], baseEnemies: 4,  enemySpeed: 0.08, enemyHp: 60,  bossHp: 1200,  bossSpeed: 0.10 },
     NORMAL: { hordeCount: 5, gunUpgradeWave: [2, 4], baseEnemies: 5,  enemySpeed: 0.10, enemyHp: 80,  bossHp: 2000, bossSpeed: 0.12 },
-    HARD:   { hordeCount: 7, gunUpgradeWave: [2, 4], baseEnemies: 6, enemySpeed: 0.12, enemyHp: 100, bossHp: 2800, bossSpeed: 0.14 }
+    HARD:   { hordeCount: 8, gunUpgradeWave: [2,4,6], baseEnemies: 6, enemySpeed: 0.12, enemyHp: 100, bossHp: 2800, bossSpeed: 0.14 }
 };
 
 let currentDifficulty;
@@ -24,7 +24,7 @@ const FRAME_DURATION = 1000 / FPS_LIMIT;
 const TILE_SIZE = 4.0;
 const PLAYER_RADIUS = 0.4;
 
-let enemyMesh, bossMesh, projectileMesh, floorMesh, wallMesh;
+let enemyMesh, enemy2Mesh, bossMesh, projectileMesh, floorMesh, wallMesh;
 let lapide1Mesh, lapide2Mesh, estatuaMesh;
 let texFloor, texWall;
 
@@ -92,6 +92,7 @@ async function initGame() {
         await AudioManager.load("sound_pistola",  "assets/audio/pistola.mp3");
         await AudioManager.load("sound_akm",      "assets/audio/akm.mp3");
         await AudioManager.load("sound_escopeta", "assets/audio/escopeta.mp3");
+        await AudioManager.load("sound_sniper", "assets/audio/sniper.mp3");
 
         await AudioManager.load("player_hit", "assets/audio/player_dano.mp3");
         await AudioManager.load("enemy_hit",  "assets/audio/inimigo_dano.mp3");
@@ -157,11 +158,13 @@ async function initGame() {
 
     try {
         enemyMesh      = await OBJLoader.load(gl, "assets/inimigo.obj");
+        enemy2Mesh     = await OBJLoader.load(gl, "assets/inimigo2.obj");
         bossMesh       = await OBJLoader.load(gl, "assets/boss.obj");
         projectileMesh = await OBJLoader.load(gl, "assets/esfera.obj");
         weaponMeshes['pistola']  = await OBJLoader.load(gl, "assets/armapistola.obj");
         weaponMeshes['akm']      = await OBJLoader.load(gl, "assets/arma.obj");
         weaponMeshes['escopeta'] = await OBJLoader.load(gl, "assets/armaescopeta.obj");
+        weaponMeshes['sniper'] = await OBJLoader.load(gl, "assets/armasniper.obj");
         wallMesh    = await OBJLoader.load(gl, "assets/cubo.obj");
         lapide1Mesh = await OBJLoader.load(gl, "assets/gravestone.obj");
         lapide2Mesh = await OBJLoader.load(gl, "assets/gravestone2.obj");
@@ -172,7 +175,6 @@ async function initGame() {
 
     if (wallMesh && texWall) wallMesh.setTexture(texWall);
 
-    // Chão com UV repetido para não esticar a textura
     const floorVerts = [
         -100.0, 0.0, -100.0,  100.0, 0.0, -100.0,  100.0, 0.0,  100.0,
         -100.0, 0.0, -100.0,  100.0, 0.0,  100.0, -100.0, 0.0,  100.0
@@ -381,7 +383,8 @@ function selectUpgrade(type) {
 const WEAPON_CHOICES = [
     { id: 'pistola',  name: 'Pistola',  desc: 'Dano: 50 | Cadência: Média' },
     { id: 'akm',      name: 'AKM',      desc: 'Dano: 20 | Cadência: Alta | Automático' },
-    { id: 'escopeta', name: 'Escopeta', desc: 'Dano: 15x8 | Cadência: Baixa | Dispersão' }
+    { id: 'escopeta', name: 'Escopeta', desc: 'Dano: 15x8 | Cadência: Baixa | Dispersão' },
+    { id: 'sniper', name: 'Sniper', desc: 'Dano: 100 | Cadência: Muito Baixa | Penetração' }
 ];
 
 function showWeaponSelection() {
@@ -691,7 +694,12 @@ function renderPlaying() {
 
     for (let e of enemies) {
         if (!e.active) continue;
-        const mesh = e.isBoss ? bossMesh : enemyMesh;
+        let mesh = null;
+        if (e.isBoss) {
+            mesh = bossMesh;
+        } else {
+            mesh = (e.meshType === 1) ? enemyMesh : enemy2Mesh;
+        }
         if (!mesh) continue;
 
         let m = Matrix4.identity();
@@ -707,7 +715,7 @@ function renderPlaying() {
 
     gl.uniform1f(programInfo.uniforms.u_flash, 0.0);
 
-    // 4. Projéteis (blend aditivo para efeito de brilho)
+    // 4. Projéteis
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.depthMask(false);
