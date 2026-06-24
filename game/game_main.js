@@ -4,7 +4,7 @@ let currentState = GameState.MENU;
 const DifficultyConfig = {
     EASY:   { hordeCount: 4, gunUpgradeWave: [2, 4], baseEnemies: 4,  enemySpeed: 0.08, enemyHp: 60,  bossHp: 1200,  bossSpeed: 0.10 },
     NORMAL: { hordeCount: 5, gunUpgradeWave: [2, 4], baseEnemies: 5,  enemySpeed: 0.10, enemyHp: 80,  bossHp: 2000, bossSpeed: 0.12 },
-    HARD:   { hordeCount: 8, gunUpgradeWave: [2,4,6], baseEnemies: 6, enemySpeed: 0.12, enemyHp: 100, bossHp: 2800, bossSpeed: 0.14 }
+    HARD:   { hordeCount: 8, gunUpgradeWave: [2,4,6], baseEnemies: 6, enemySpeed: 0.12, enemyHp: 100, bossHp: 2800, bossSpeed: 0.14 },
 };
 
 let currentDifficulty;
@@ -18,6 +18,9 @@ let mouseJustPressed = false;
 let gameStarting = false;
 let gl, program, programInfo, camera, input;
 let lastFrameTime = 0;
+
+let isSurvivalMode = false;
+let currentScore = 0;
 
 const FPS_LIMIT = 60;
 const FRAME_DURATION = 1000 / FPS_LIMIT;
@@ -234,6 +237,7 @@ async function initGame() {
             if (e.key === '1') player.switchWeapon(0);
             if (e.key === '2') player.switchWeapon(1);
             if (e.key === '3') player.switchWeapon(2);
+            if (e.key === '4') player.switchWeapon(3);
         }
     });
 
@@ -324,7 +328,16 @@ async function runActualGame(diffStr) {
         console.warn("Erro de áudio:", e);
     }
 
-    currentDifficulty = DifficultyConfig[diffStr];
+    currentScore = 0;
+    document.getElementById('hud-score').innerText = "0";
+
+    if (diffStr === 'SURVIVAL') {
+        isSurvivalMode = true;
+        currentDifficulty = { hordeCount: Infinity, gunUpgradeWave: [2, 4, 6], baseEnemies: 4, enemySpeed: 0.12, enemyHp: 80 };
+    } else {
+        isSurvivalMode = false;
+        currentDifficulty = DifficultyConfig[diffStr];
+    }
     player       = new Player();
     hordeManager = new HordeManager(currentDifficulty);
     projectiles  = [];
@@ -495,6 +508,7 @@ function updatePlaying() {
         document.exitPointerLock();
         if (AudioManager.musicSource) { AudioManager.musicSource.stop(); AudioManager.musicSource = null; }
         AudioManager.play("derrota");
+        document.getElementById("final-score").innerText = currentScore;
         document.getElementById("game-over-screen").style.display = "flex";
         document.getElementById("crosshair").style.display = "none";
         return;
@@ -580,6 +594,7 @@ function updatePlaying() {
             document.exitPointerLock();
             if (AudioManager.musicSource) { AudioManager.musicSource.stop(); AudioManager.musicSource = null; }
             AudioManager.play("vitoria");
+            document.getElementById("final-score").innerText = currentScore;
             document.getElementById("victory-screen").style.display = "flex";
             document.getElementById("crosshair").style.display = "none";
         }

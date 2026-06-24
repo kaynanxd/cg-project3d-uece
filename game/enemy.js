@@ -16,7 +16,7 @@ class Enemy {
         this.isDying = false; 
         this.yaw = 0; 
         this.meshType = meshType;
-
+        this.scoreValue = isBoss ? 500 : 100;
         this.wobbleTimer = Math.random() * 100;
         this.wobbleSpeed = 0.05 + Math.random() * 0.03;
     }
@@ -87,6 +87,13 @@ class Enemy {
             this.isDying = true; 
             this.flashFrames = 15; 
             AudioManager.play("enemy_death", 0.6);
+            if (typeof currentScore !== 'undefined') {
+                currentScore += this.scoreValue;
+                const scoreElement = document.getElementById('hud-score');
+                if (scoreElement) scoreElement.innerText = currentScore;
+            }
         }
+
+
     }
 }
