@@ -53,9 +53,35 @@ class Enemy {
         if (distance > attackRange) {
             let dirX = dx / distance;
             let dirZ = dz / distance;
+
+
+            let lookAheadDist = this.radius + 1.2; 
+            let checkX = this.x + dirX * lookAheadDist;
+            let checkZ = this.z + dirZ * lookAheadDist;
+
+            if (isWallBlocking(checkX, checkZ, this.radius)) {
+                let sideX = -dirZ;
+                let sideZ = dirX;
+
+                let leftFree = !isWallBlocking(this.x + sideX * 1.5, this.z + sideZ * 1.5, this.radius);
+                
+                let avoidanceForce = 0.8;
+                if (!leftFree) {
+                    avoidanceForce = -0.8;
+                }
+
+                dirX += sideX * avoidanceForce;
+                dirZ += sideZ * avoidanceForce;
+
+                let newLen = Math.sqrt(dirX * dirX + dirZ * dirZ);
+                if (newLen > 0) {
+                    dirX /= newLen;
+                    dirZ /= newLen;
+                }
+            }
+
             let sideX = -dirZ;
             let sideZ = dirX;
-
             let sideAmplitude = this.isBoss ? 0.02 : 0.04;
             let lateralWobble = Math.sin(this.wobbleTimer) * sideAmplitude;
 
