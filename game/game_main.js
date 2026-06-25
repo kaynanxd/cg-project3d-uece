@@ -18,6 +18,7 @@ let mouseJustPressed = false;
 let gameStarting = false;
 let gl, program, programInfo, camera, input;
 let lastFrameTime = 0;
+let menuEnemyLeft, menuEnemyRight;
 
 let isSurvivalMode = false;
 let currentScore = 0;
@@ -148,6 +149,9 @@ async function initGame() {
             u_flash:            gl.getUniformLocation(program, "u_flash")
         }
     };
+
+    input  = new InputHandler("glcanvas1");
+    camera = new FPSCamera(7 * TILE_SIZE, 1.5, 7 * TILE_SIZE);
 
     input  = new InputHandler("glcanvas1");
     camera = new FPSCamera(7 * TILE_SIZE, 1.5, 7 * TILE_SIZE);
@@ -476,6 +480,9 @@ function gameLoop(timestamp) {
             renderPlaying();
         } else if (currentState === GameState.UPGRADING) {
             renderPlaying();
+        } else if (currentState === GameState.MENU) {
+            updateMenu();
+            renderMenu();
         }
     }
 
@@ -803,6 +810,58 @@ function renderPlaying() {
         activeWeaponMesh.modelMatrix = m;
         aplicarLuzDinamica();
         activeWeaponMesh.draw(programInfo);
+    }
+}
+
+function updateMenu() {
+}
+
+function renderMenu() {
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const aspect = gl.canvas.width / gl.canvas.height;
+    const projMatrix = Matrix4.perspective(60 * Math.PI / 180, aspect, 0.1, 200.0);
+    const viewMatrix = camera.getViewMatrix();
+
+    gl.useProgram(program);
+    gl.uniformMatrix4fv(programInfo.uniforms.u_projection, false, projMatrix);
+    gl.uniformMatrix4fv(programInfo.uniforms.u_view, false, viewMatrix);
+
+    gl.uniform3f(programInfo.uniforms.u_lightPosition, camera.position.x, camera.position.y + 0.5, camera.position.z);
+    gl.uniform3f(programInfo.uniforms.u_viewPosition,  camera.position.x, camera.position.y, camera.position.z);
+    const sinYaw = Math.sin(camera.yaw), cosYaw = Math.cos(camera.yaw);
+    gl.uniform3f(programInfo.uniforms.u_lightDirection, -sinYaw, 0.0, -cosYaw);
+
+    gl.uniform1f(programInfo.uniforms.u_lightCutOff,      Math.cos(80 * Math.PI / 180));
+    gl.uniform1f(programInfo.uniforms.u_lightOuterCutOff, Math.cos(90 * Math.PI / 180));
+    gl.uniform1i(programInfo.uniforms.u_numProjLights, 0);
+    
+    gl.uniform3f(programInfo.uniforms.u_lightColor, 4.0, 4.0, 4.0);
+
+    gl.uniform1i(programInfo.uniforms.u_useTexture, 0);
+    gl.uniform1f(programInfo.uniforms.u_flash, 0.0);
+    gl.uniform4f(programInfo.uniforms.u_color, 1.0, 1.0, 1.0, 1.0); 
+
+    const time = performance.now() * 0.002; 
+    
+    const centerX = 7 * TILE_SIZE;
+    const centerZ = 7 * TILE_SIZE - 5;
+    const floorY = 0; 
+
+    if (enemyMesh) {
+        let m1 = Matrix4.identity();
+        m1 = Matrix4.multiply(Matrix4.rotationY(Math.PI / 6), m1); 
+        m1 = Matrix4.multiply(Matrix4.translation(centerX - 2.5, floorY + Math.cos(time) * 0.15, centerZ), m1);
+        enemyMesh.modelMatrix = m1;
+        enemyMesh.draw(programInfo);
+    }
+
+    if (enemy2Mesh) {
+        let m2 = Matrix4.identity();
+        m2 = Matrix4.multiply(Matrix4.rotationY(-Math.PI / 6), m2); 
+        m2 = Matrix4.multiply(Matrix4.translation(centerX + 2.5, floorY + Math.sin(time) * 0.15, centerZ), m2);
+        enemy2Mesh.modelMatrix = m2;
+        enemy2Mesh.draw(programInfo);
     }
 }
 
