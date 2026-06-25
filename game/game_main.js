@@ -248,6 +248,19 @@ async function initGame() {
     document.getElementById("menu-screen").style.display = "flex";
     document.querySelectorAll("#menu-screen .btn").forEach(b => b.disabled = false);
 
+    const menuStatus = document.getElementById("menu-status");
+    if (menuStatus) {
+        menuStatus.textContent = "Selecione a Dificuldade"; 
+    }
+
+    const btnJogar = document.getElementById("btn-jogar");
+    const btnCreditos = document.getElementById("btn-creditos");
+    if (btnJogar) btnJogar.disabled = false;
+    if (btnCreditos) btnCreditos.disabled = false;
+
+    document.getElementById("menu-screen").style.display = "flex";
+    document.querySelectorAll("#menu-screen .btn").forEach(b => b.disabled = false);
+
     requestAnimationFrame(gameLoop);
 }
 
