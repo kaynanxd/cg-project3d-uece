@@ -1,6 +1,6 @@
-# WebGL Doom
+# WebGL FPS Shooter
 
-WebGL Doom é um jogo de tiro e sobrevivência em ondas em primeira pessoa desenvolvido integralmente em WebGL Puro. O jogador é colocado em uma arena de cemitério cercada por muralhas, enfrentando hordas de inimigos que ficam progressivamente mais difíceis até o confronto final com um chefe. Entre as ondas, o jogador escolhe upgrades e uma arma permanente.
+WebGL FPS Shooter é um jogo de tiro e sobrevivência em ondas em primeira pessoa desenvolvido integralmente em WebGL Puro. O jogador é colocado em uma arena de cemitério cercada por muralhas, enfrentando hordas de inimigos que ficam progressivamente mais difíceis até o confronto final com um chefe. Entre as ondas, o jogador escolhe upgrades e uma arma permanente.
 
 ## Funcionalidades Técnicas
 
