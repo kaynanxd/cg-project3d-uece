@@ -242,7 +242,6 @@ async function initGame() {
     });
 
     document.getElementById("menu-screen").style.display = "flex";
-    document.getElementById("menu-status").textContent = "Selecione a Dificuldade";
     document.querySelectorAll("#menu-screen .btn").forEach(b => b.disabled = false);
 
     requestAnimationFrame(gameLoop);
@@ -262,6 +261,24 @@ function resumeGame() {
 
 let isCutsceneRunning = false;
 let savedDifficulty = "NORMAL"; 
+
+function showDifficultyMenu() {
+    document.getElementById('main-menu-view').style.display = 'none';
+    document.getElementById('credits-view').style.display = 'none';
+    document.getElementById('difficulty-view').style.display = 'flex';
+}
+
+function showCredits() {
+    document.getElementById('main-menu-view').style.display = 'none';
+    document.getElementById('difficulty-view').style.display = 'none';
+    document.getElementById('credits-view').style.display = 'flex';
+}
+
+function showMainMenu() {
+    document.getElementById('difficulty-view').style.display = 'none';
+    document.getElementById('credits-view').style.display = 'none';
+    document.getElementById('main-menu-view').style.display = 'flex';
+}
 
 async function startGame(diffStr, event) {
     if (event) event.stopPropagation();

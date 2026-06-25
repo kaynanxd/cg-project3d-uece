@@ -21,21 +21,29 @@
             justify-content: center; align-items: center; pointer-events: auto;
         }
 
-        h1 { font-size: 4rem; color: #ff3333; text-transform: uppercase; text-shadow: 2px 2px #000; }
+        h1 { font-size: 4rem; color: #d70000; text-transform: uppercase; text-shadow: 2px 2px #000; }
         
         .btn {
-            background-color: #440000; color: white; border: 2px solid #ff3333;
+            background-color: #440000; color: white; border: 2px solid #d70000;
             padding: 15px 30px; margin: 10px; font-size: 1.5rem; cursor: pointer;
             font-family: inherit; transition: 0.2s;
         }
-        .btn:hover { background-color: #ff3333; color: black; }
+        .btn:hover {
+            background-image: url('./assets/bg-btt.png');
+            background-color: transparent;
+        }
+
+        #btn-survival:hover {
+            background-image: url('./assets/bg_btt_survival.png');
+            background-color: transparent;
+        }
 
         /* HUD durante o jogo */
         #hud {
             position: absolute; bottom: 20px; left: 20px; font-size: 1.5rem; 
             text-shadow: 2px 2px #000; display: none; font-weight: bold;
         }
-        #hud-hp { color: #ff3333; }
+        #hud-hp { color: #d70000; }
         #hud-stamina { color: #33ff33; }
         #hud-damage, #hud-lives, #hud-piercing { color: #ffffff; }
         #hud-stats-grid { display: flex; flex-direction: column; gap: 2px; }
@@ -115,6 +123,21 @@
             pointer-events: auto;
             display: flex;
         }
+
+        .devenlopers_credits a{
+            display: flex;
+            text-decoration: none;
+            color: white;
+        }
+
+        .devenlopers_credits p {
+            cursor: pointer;
+        }
+
+        .devenlopers_credits p:hover {
+            color: red;
+        }
+        
     </style>
 </head>
 <body>
@@ -166,12 +189,68 @@
         </div>
 
         <div id="menu-screen" class="screen">
-            <h1>WEBGL FPS SHOOTER</h1>
-            <p id="menu-status" style="color:#aaa;">Carregando assets...</p>
-            <button class="btn" onclick="startGame('EASY', event)" disabled>Fácil</button>
-            <button class="btn" onclick="startGame('NORMAL', event)" disabled>Normal</button>
-            <button class="btn" onclick="startGame('HARD', event)" disabled>Difícil</button>
-            <button class="btn" id="btn-survival" onclick="startGame('SURVIVAL', event)" style="border-color: #ffcc00; background-color: #443300;" disabled>Sobrevivência</button>
+            
+            <div id="main-menu-view" style="display: flex; flex-direction: column; align-items: center;">
+                <h1>WEBGL FPS SHOOTER</h1>
+                <p id="menu-status" style="color:#aaa;">Carregando assets...</p>
+                
+                <button class="btn" id="btn-jogar" onclick="showDifficultyMenu()" disabled>Jogar</button>
+                <button class="btn" id="btn-creditos" onclick="showCredits()" disabled>Créditos</button>
+            </div>
+
+            <div id="difficulty-view" style="display: none; flex-direction: column; align-items: center;">
+                <h2 style="font-size: 3rem; color: #ff3333; margin-bottom: 20px; text-shadow: 2px 2px #000;">SELECIONE A DIFICULDADE</h2>
+                
+                <button class="btn" onclick="startGame('EASY', event)">Fácil</button>
+                <button class="btn" onclick="startGame('NORMAL', event)">Normal</button>
+                <button class="btn" onclick="startGame('HARD', event)">Difícil</button>
+                <button class="btn" id="btn-survival" onclick="startGame('SURVIVAL', event)" style="border-color: #ffcc00; background-color: #443300;">Sobrevivência</button>
+                
+                <button class="btn" onclick="showMainMenu()" style="margin-top: 30px; font-size: 1.2rem; background: transparent; border-color: #aaa; color: #aaa;">Voltar</button>
+            </div>
+
+            <div id="credits-view" style="display: none; flex-direction: column; align-items: center;">
+                <h2 style="font-size: 3rem; color: #ffcc00; margin-bottom: 20px; text-shadow: 2px 2px #000;">CRÉDITOS</h2>
+                
+                <div>
+                    <p style="font-size: 1.5rem; margin: 10px 0;">Desenvolvido por:</p>
+                    <div class="devenlopers_credits">
+                        <a href="https://github.com/anbeatrizduarte">
+                            <img src="./assets/github_logo.jpeg" alt="Logo do GitHub" height="30px" style="padding-right: 10px; margin-top: 8px;">
+                            <p style="font-size: 1.5rem; margin: 10px 0;">Beatriz Duarte</p>
+                        </a>                        
+                    </div>
+
+                    <div class="devenlopers_credits">
+                        <a href="https://github.com/kaynanxd">
+                            <img src="./assets/github_logo.jpeg" alt="Logo do GitHub" height="30px" style="padding-right: 10px; margin-top: 8px;">
+                            <p style="font-size: 1.5rem; margin: 10px 0;">Kaynan Santos</p>
+                        </a>                      
+                    </div>
+
+                    <div class="devenlopers_credits">
+                        <a href="https://github.com/marcellolee03">
+                            <img src="./assets/github_logo.jpeg" alt="Logo do GitHub" height="30px" style="padding-right: 10px; margin-top: 8px;">
+                            <p style="font-size: 1.5rem; margin: 10px 0;">Marcello Lee</p>
+                        </a>
+                    </div>
+                </div>
+                
+                <div id="div_linkrepo" style="margin-top: 50px;">
+                    <a href="https://github.com/kaynanxd/cg-project3d-uece" target="_blank">
+                        <p style="font-size: 1.5rem; margin: 10px 0; text-decoration: underline; color: white;">Link do repositório</p>
+                    </a>
+                </div>
+
+                <div style="margin-top: 30px; align-items: center;">
+                    <p style="font-size: 1.2rem; color: #aaa; margin: 5px 0;">Motor WebGL Customizado</p>
+                    <p style="font-size: 1.2rem; color: #aaa; margin: 5px 0;">Efeitos Sonoros e Modelos 3D</p>
+                </div>
+                
+                
+                <button class="btn" onclick="showMainMenu()" style="margin-top: 40px; font-size: 1.2rem; background: transparent; border-color: #aaa; color: #aaa;">Voltar</button>
+            </div>
+
         </div>
 
         <div id="pause-screen" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:10;">
@@ -209,5 +288,7 @@
     <script src="game/powerup_types.js"></script>
     <script src="game/game_main.js"></script>
     <script src="engine/audio.js"></script>
+
+    
 </body>
 </html>
